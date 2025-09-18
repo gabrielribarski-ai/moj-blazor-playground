@@ -1,13 +1,10 @@
 ﻿@page "/oceni-invalidnost"
 @using IzracunInvalidnostiBlazor.Services
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@inject UserSessionState SessionState
-@inject NavigationManager NavigationManager
-@rendermode InteractiveServer
-@inject SegmentService segmenti
 @inject SessionStorageService Storage
+@inject NavigationManager NavigationManager
+@inject SegmentService segmenti
 @inject PogojAtributNaborLoader AtributLoader
-
+@rendermode InteractiveServer
 
 <h3>Oceni invalidnost</h3>
 
@@ -24,8 +21,9 @@ else
         @foreach (var korak in pot)
         {
             <span @onclick="@(() => NavigirajNaSegment(korak))"
-                  style="cursor:pointer; text-decoration:underline;">
-                @korak.Ime
+                  style="cursor:pointer; text-decoration:underline;"
+                  @key="korak.SegmentId">
+                @korak.Opis
             </span>
             @if (!ReferenceEquals(korak, pot.Last()))
             {
@@ -34,43 +32,50 @@ else
         }
     </div>
 
-    @* Prikažemo ocenjevalne atribute samo za AKTUALNI segment (TrenutniSegment),
-       ne pa za njegove otroke. *@
-    @if (TrenutniSegment.ImaOcenjevalneAtribute)
+    @if (atributiZaTrenutniSegment.Any())
     {
-        <OcenjevalniAtribut Segment="TrenutniSegment" />
+        <OcenjevalniAtribut Segment="TrenutniSegment"
+                            Atributi="atributiZaTrenutniSegment"
+                            @key="TrenutniSegment.SegmentId" />
     }
 
-    @* Otroci so vedno navigacijski (klikabilni), ne glede na to, ali imajo atribute. *@
     @foreach (var podsegment in otroci)
     {
-        <DelTelesa Segment="podsegment" OnNavigate="NavigirajNaSegment" />
+        <DelTelesa Segment="podsegment"
+                   OnNavigate="NavigirajNaSegment"
+                   @key="podsegment.SegmentId" />
     }
 }
 
 @code {
-    public List<Atribut> Atributi { get; set; } = new();
     private bool _initialized = false;
     private List<Segment> segmentiZaPrikaz = new();
     private Segment? TrenutniSegment;
-    private List<Atribut>? vsiAtributi;
+
+    private List<Atribut> vsiAtributi = new();
     private List<Atribut> atributiZaTrenutniSegment = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !_initialized)
         {
-            // (obstoječa inicializacija segmentov…)
+            var pogojIdStr = await Storage.GetItemAsync<string>("izbraniPogojId");
+            if (!int.TryParse(pogojIdStr, out var pogojId))
+            {
+                NavigationManager.NavigateTo("/");
+                return;
+            }
+
+            // 1) Segmenti
             await segmenti.PreberiSegmenteDB();
             segmentiZaPrikaz = segmenti.GetRootSegments();
             TrenutniSegment = segmenti.GetRootSegment();
 
-            // **novo**: naloži vse atribute za izbrani pogoj
-            if (int.TryParse(SessionState.IzbraniPogojId, out var pid))
-            {
-                vsiAtributi = await AtributLoader.LoadForPogojAsync(pid);
-                FiltrirajAtribute();
-            }
+            // 2) Atributi
+            vsiAtributi = await AtributLoader.LoadForPogojAsync(pogojId);
+
+            // 3) Prvi filter
+            FiltrirajAtribute();
 
             _initialized = true;
             StateHasChanged();
@@ -86,14 +91,20 @@ else
 
     private void FiltrirajAtribute()
     {
-        if (vsiAtributi is null || TrenutniSegment is null)
-        {
-            atributiZaTrenutniSegment.Clear();
+        atributiZaTrenutniSegment.Clear();
+
+        if (TrenutniSegment is null || vsiAtributi.Count == 0)
             return;
-        }
+
+        // POZOR: Tip in oblika ID-ja — poravnaj ju (trim/upper/pretvorba)
+        var segId = TrenutniSegment.SegmentId?.ToString()?.Trim();
 
         atributiZaTrenutniSegment = vsiAtributi
-            .Where(a => a.SegmentId == TrenutniSegment.SegmentId)
+            .Where(a => string.Equals(
+                a.SegmentId?.ToString()?.Trim(),
+                segId,
+                StringComparison.OrdinalIgnoreCase))
+            .OrderBy(a => a.AtributId)
             .ToList();
     }
 }

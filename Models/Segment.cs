@@ -5,7 +5,7 @@ public class Segment
 {
     public string SegmentId { get; set; } = string.Empty;
 
-    public string Ime { get; set; } = string.Empty;
+    public string Opis { get; set; } = string.Empty;
 
     // Hierarhična pot, npr. "TELO->ROKA->PRST"
     public string Pot { get; set; } = string.Empty;

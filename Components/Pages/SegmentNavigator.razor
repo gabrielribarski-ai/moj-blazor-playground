@@ -4,7 +4,7 @@
     @foreach (var segment in breadcrumb)
     {
         <span @onclick="() => NavigateTo(segment)" style="cursor:pointer">
-            @segment.Ime
+            @segment.Opis
         </span>
         @if (segment != breadcrumb.Last())
         {
@@ -13,7 +13,7 @@
     }
 </div>
 
-<h3>@currentSegment?.Ime</h3>
+<h3>@currentSegment?.Opis</h3>
 
 @if (children.Any())
 {
@@ -21,7 +21,7 @@
         @foreach (var child in children)
         {
             <li @onclick="() => NavigateTo(child)" style="cursor:pointer">
-                @child.Ime
+                @child.Opis
             </li>
         }
     </ul>

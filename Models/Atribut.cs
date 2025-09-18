@@ -29,7 +29,7 @@ namespace IzracunInvalidnostiBlazor
 
         public string AtributId { get; set; }
         public string SegmentId { get; set; }
-        public string Ime { get; set; } = string.Empty;
+        public string Opis { get; set; } = string.Empty;
         public string TipMeritve { get; set; } = "NUM";
         public string Enota { get; set; } = string.Empty;
 

@@ -4,12 +4,12 @@
 @inject SessionStorageService Storage
 
 <div class="segment-box listni">
-    <h4>@Segment.Ime</h4>
+    <h4>@Segment.Opis</h4>
 
     @foreach (var atribut in Segment.Atributi)
     {
         <div class="atribut-row">
-            <label>@atribut.Ime (@atribut.Enota)</label>
+            <label>@atribut.Opis (@atribut.Enota)</label>
 
             <table class="atribut-tabela">
                 <thead>
@@ -73,7 +73,10 @@
 </div>
 
 @code {
-    [Parameter] public Segment Segment { get; set; }
+  
+    [Parameter] public Segment Segment { get; set; } = default!;
+    [Parameter] public List<Atribut> Atributi { get; set; } = new();
+
 
     private bool OcenaPotrjena = false;
     private string IzbranaMetoda = "standard";

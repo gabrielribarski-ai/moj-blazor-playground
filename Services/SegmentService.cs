@@ -47,7 +47,7 @@ public class SegmentService
                             Atribut atr = new Atribut()
                             {
                                 AtributId = dr["ID"].ToString(),
-                                Ime= dr["OPIS"].ToString(),
+                                Opis= dr["OPIS"].ToString(),
                                 SegmentId = dr["SEGMENT_ID"].ToString(),
                                 StandardnaVrednost = dr["STANDARD"]?.ToDecimal(),
                                 TipMeritve = dr["TIP_MERITVE"].ToString(),
@@ -87,7 +87,7 @@ q += " FROM B1_SEGMENTI seg";
                 Seznam.Add(new Segment
                 {
                     SegmentId = dr["SEGMENT_ID"].ToString(),
-                    Ime = dr["OPIS"].ToString(),
+                    Opis = dr["OPIS"].ToString(),
                     
                     NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
                     //Tip = reader.GetString(3),
@@ -141,7 +141,7 @@ q += " FROM B1_SEGMENTI seg";
 
     public Segment? FindSegmentByName(string ime)
     {
-        return Seznam.FirstOrDefault(s => s.Ime.Equals(ime, StringComparison.OrdinalIgnoreCase));
+        return Seznam.FirstOrDefault(s => s.Opis.Equals(ime, StringComparison.OrdinalIgnoreCase));
     }
 
 

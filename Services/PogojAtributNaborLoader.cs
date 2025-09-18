@@ -40,7 +40,7 @@ LEFT JOIN B1_ATRIBUTI atr ON pa.SEGMENT_ID=atr.SEGMENT_ID
 LEFT JOIN B1_POGOJ_ATRIBUT_STOPNJA pas
     ON pas.POGOJ_ATRIBUT_ID = pa.ID
 WHERE 
-pa.POGOJ_ID = 6000003 --:pogojId
+pa.POGOJ_ID = :pogojId
   --AND atr.AKTIVNO = 'Y'
 ORDER BY pa.SEGMENT_ID, pa.ID, pas.ZAP_ST";
 
@@ -68,7 +68,8 @@ ORDER BY pa.SEGMENT_ID, pa.ID, pas.ZAP_ST";
                     atr = new Atribut
                     {
                         AtributId = aid,
-                        SegmentId = dr["Segment_Id"].ToString()!,
+                        Opis = dr["ATRIBUT_OPIS"].ToString(),
+                        SegmentId = dr["Segment_Id"].ToString(),
                         StandardnaVrednost = dr["Standard"] as decimal?,
                         TipMeritve = dr["Tip_Meritve"].ToString()!,
                         Enota = dr["Enota"].ToString()!
