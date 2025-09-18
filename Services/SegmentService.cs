@@ -26,7 +26,7 @@ public class SegmentService
     {
         using var conn = new OracleConnection(_config.GetConnectionString("APL_INVALIDNOST"));
         conn.Open();
-        string q = "SELECT ATRIBUTID, SEGMENTID, STANDARDNAVREDNOST, ENOTA, TIPMERITVE, MOZNAPRIMERJAVA, IME from B_ATRIBUTI ";
+        string q = "SELECT ID, SEGMENT_ID, STANDARD, ENOTA, TIP_MERITVE, MOZNA_PRIMERJAVA, OPIS from B1_ATRIBUTI ";
 
             using (OracleCommand cmd = new OracleCommand(q, conn))
             {
@@ -46,11 +46,11 @@ public class SegmentService
                         {
                             Atribut atr = new Atribut()
                             {
-                                AtributId = dr["ATRIBUTID"].ToString(),
-                                Ime= dr["IME"].ToString(),
-                                SegmentId = dr["SEGMENTID"].ToString(),
-                                StandardnaVrednost = dr["STANDARDNAVREDNOST"]?.ToDecimal(),
-                                TipMeritve = dr["TIPMERITVE"].ToString(),
+                                AtributId = dr["ID"].ToString(),
+                                Ime= dr["OPIS"].ToString(),
+                                SegmentId = dr["SEGMENT_ID"].ToString(),
+                                StandardnaVrednost = dr["STANDARD"]?.ToDecimal(),
+                                TipMeritve = dr["TIP_MERITVE"].ToString(),
                                 Enota =dr["ENOTA"].ToString(),
                             };
                             segment.Atributi.Add(atr);
@@ -69,9 +69,10 @@ public class SegmentService
 
         using var conn = new OracleConnection(_config.GetConnectionString("APL_INVALIDNOST"));
         conn.Open();
-        string q = " SELECT seg.SEGMENTID, seg.IME, seg.NADREJENIID, seg.TIP, seg.STRANSKOST, ";
-        q += "( select count (atr.atributid) from b_atributi atr   where atr.segmentid=seg.segmentid    ) as st_kriterijev ";
-        q += "FROM B_SEGMENTI seg";
+        string q="";
+        q += "SELECT seg.ID AS SEGMENT_ID, seg.OPIS, seg.NADREJENI_ID, seg.TIP, seg.LDE,";
+q += " (select count(atr.ID) from b1_atributi atr   where atr.segment_id = seg.ID    ) as st_kriterijev";
+q += " FROM B1_SEGMENTI seg";
 
 
         using (OracleCommand cmd = new OracleCommand(q, conn))
@@ -85,12 +86,12 @@ public class SegmentService
             {
                 Seznam.Add(new Segment
                 {
-                    SegmentId = dr["SEGMENTID"].ToString(),
-                    Ime = dr["IME"].ToString(),
+                    SegmentId = dr["SEGMENT_ID"].ToString(),
+                    Ime = dr["OPIS"].ToString(),
                     
-                    NadsegmentId = (dr["NADREJENIID"].ToString() == "" ? null : dr["NADREJENIID"].ToString()),
+                    NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
                     //Tip = reader.GetString(3),
-                    Stranskost = dr["STRANSKOST"].ToString(),
+                    Stranskost = dr["LDE"].ToString(),
                     Atributi = new List<Atribut>(),
                     Children = new List<Segment>(),
                     ImaOcenjevalneAtribute= dr["st_kriterijev"].ToString()!="0",

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
     builder.Services.AddRazorComponents()
         .AddInteractiveServerComponents();
 
-
+/*
 if (builder.Environment.IsDevelopment())
     {
         builder.Services.AddScoped< PogojService>();
@@ -20,7 +20,11 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<PogojService>();
     builder.Services.AddScoped<SegmentService>();
     builder.Services.AddScoped<PogojAtributNaborLoader>();
-}
+}*/
+
+builder.Services.AddScoped<PogojService>();
+builder.Services.AddScoped<SegmentService>();
+builder.Services.AddScoped<PogojAtributNaborLoader>();
 builder.Services.AddScoped<UserSessionState>();
 builder.Services.AddScoped<SessionStorageService>();
 

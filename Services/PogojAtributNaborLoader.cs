@@ -24,22 +24,25 @@ namespace IzracunInvalidnostiBlazor.Services
 
             const string sql = @"
 SELECT
-    atr.ID                       AS AtributId,
-    atr.SEGMENT_ID               AS SegmentId,
-    atr.STANDARDNA_VREDNOST      AS StandardnaVrednost,
-    atr.TIP_MERITVE              AS TipMeritve,
+    PA.POGOJ_ID AS PogojId,
+    pa.ID                       AS Atribut_Id,
+    pa.SEGMENT_ID               AS Segment_Id,
+    atr.STANDARD      AS Standard,
+    atr.TIP_MERITVE              AS Tip_Meritve,
     atr.ENOTA                    AS Enota,
-    stop.ZAP_ST                  AS ZapSt,
-    stop.OBMOCJE_OPERATOR_1      AS ObmocjeOperator,
-    stop.OBMOCJE_NUM             AS ObmocjeNum,
-    stop.MAX_PROCENT             AS MaxProcent,
-    stop.STOPNJA                 AS Stopnja
-FROM B1_POGOJ_ATRIBUT atr
-LEFT JOIN B1_POGOJ_ATRIBUT_STOPNJA stop
-    ON stop.POGOJ_ATRIBUT_ID = atr.ID
-WHERE atr.POGOJ_ID = :pogojId
-  AND atr.AKTIVNO = 'Y'
-ORDER BY atr.SEGMENT_ID, atr.ID, stop.ZAP_ST";
+    atr.opis as ATRIBUT_OPIS,
+    pas.ZAP_ST                  AS Zap_St,
+    pas.OBMOCJE_OPERATOR_1      AS Obmocje_Operator_1,
+    pas.OBMOCJE_NUM             AS Obmocje_Num,
+    pas.STOPNJA_NUM                 AS STOPNJA_NUM
+FROM B1_POGOJ_ATRIBUT pa
+LEFT JOIN B1_ATRIBUTI atr ON pa.SEGMENT_ID=atr.SEGMENT_ID
+LEFT JOIN B1_POGOJ_ATRIBUT_STOPNJA pas
+    ON pas.POGOJ_ATRIBUT_ID = pa.ID
+WHERE 
+pa.POGOJ_ID = 6000003 --:pogojId
+  --AND atr.AKTIVNO = 'Y'
+ORDER BY pa.SEGMENT_ID, pa.ID, pas.ZAP_ST";
 
             using var cmd = new OracleCommand(sql, conn)
             {
@@ -58,16 +61,16 @@ ORDER BY atr.SEGMENT_ID, atr.ID, stop.ZAP_ST";
 
             foreach (DataRow dr in dt.Rows)
             {
-                var aid = dr["AtributId"].ToString()!;
+                var aid = dr["Atribut_Id"].ToString()!;
                 if (!lookup.TryGetValue(aid, out var atr))
                 {
                     // prvič vidimo ta atribut → kreiramo nov objekt
                     atr = new Atribut
                     {
                         AtributId = aid,
-                        SegmentId = dr["SegmentId"].ToString()!,
-                        StandardnaVrednost = dr["StandardnaVrednost"] as decimal?,
-                        TipMeritve = dr["TipMeritve"].ToString()!,
+                        SegmentId = dr["Segment_Id"].ToString()!,
+                        StandardnaVrednost = dr["Standard"] as decimal?,
+                        TipMeritve = dr["Tip_Meritve"].ToString()!,
                         Enota = dr["Enota"].ToString()!
                     };
                     lookup[aid] = atr;
@@ -79,11 +82,11 @@ ORDER BY atr.SEGMENT_ID, atr.ID, stop.ZAP_ST";
                 {
                     var stopnja = new StopnjaDeficita
                     {
-                        ZapSt = Convert.ToInt32(dr["ZapSt"]),
-                        Operator = dr["ObmocjeOperator"].ToString()!,
-                        ObmocjeNum = Convert.ToDecimal(dr["ObmocjeNum"]),
-                        MaxProcent = Convert.ToDecimal(dr["MaxProcent"]),
-                        Stopnja = dr["Stopnja"].ToString()!
+                        ZapSt = Convert.ToInt32(dr["Zap_St"]),
+                        Operator = dr["Obmocje_Operator_1"].ToString()!,
+                        ObmocjeNum = Convert.ToDecimal(dr["Obmocje_Num"]),
+                        //MaxProcent = Convert.ToDecimal(dr["MaxProcent"]),
+                        Stopnja = dr["STOPNJA_NUM"].ToString()!
                     };
                     // privzeto predvidevamo, da si v Atributu dodal List<StopnjaDeficita> Stopnje { get; set; }
                     atr.Stopnje.Add(stopnja);
