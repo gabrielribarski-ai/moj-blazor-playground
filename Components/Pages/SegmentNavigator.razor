@@ -1,0 +1,71 @@
+﻿
+
+<div class="breadcrumb">
+    @foreach (var segment in breadcrumb)
+    {
+        <span @onclick="() => NavigateTo(segment)" style="cursor:pointer">
+            @segment.Ime
+        </span>
+        @if (segment != breadcrumb.Last())
+        {
+            <span> 🞂 </span>
+        }
+    }
+</div>
+
+<h3>@currentSegment?.Ime</h3>
+
+@if (children.Any())
+{
+    <ul>
+        @foreach (var child in children)
+        {
+            <li @onclick="() => NavigateTo(child)" style="cursor:pointer">
+                @child.Ime
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>Ni podrejenih segmentov. Tukaj se lahko dodajo atributi.</p>
+}
+
+@if (currentSegment?.Atributi.Any() == true)
+{
+    <h4>Atributi:</h4>
+    <ul>
+        @foreach (var atribut in currentSegment.Atributi)
+        {
+            /*<li>@atribut.Ime (@atribut.Tip)</li>*/
+        }
+    </ul>
+}
+
+
+@code {
+    [Inject] public SegmentService SegmentService { get; set; }
+
+    private Segment? currentSegment;
+    private List<Segment> children = new();
+    private List<Segment> breadcrumb = new();
+
+    protected async override void OnInitialized()
+    {
+        await SegmentService.PreberiSegmenteDB();
+        currentSegment = SegmentService.GetRootSegments().FirstOrDefault(); // npr. TELO
+        UpdateView();
+    }
+
+    private void NavigateTo(Segment segment)
+    {
+        currentSegment = segment;
+        UpdateView();
+    }
+
+    private void UpdateView()
+    {
+        children = SegmentService.GetSegmentChildren(currentSegment!.SegmentId);
+        breadcrumb = SegmentService.GetBreadcrumbPath(currentSegment.SegmentId);
+    }
+}

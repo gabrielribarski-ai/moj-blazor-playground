@@ -1,0 +1,124 @@
+﻿@namespace IzracunInvalidnostiBlazor
+@inject UserSessionState SessionState
+@inject NavigationManager Nav
+@inject SessionStorageService Storage
+
+<div class="segment-box listni">
+    <h4>@Segment.Ime</h4>
+
+    @foreach (var atribut in Segment.Atributi)
+    {
+        <div class="atribut-row">
+            <label>@atribut.Ime (@atribut.Enota)</label>
+
+            <table class="atribut-tabela">
+                <thead>
+                    <tr>
+                        <th>L</th>
+                        <th>S</th>
+                        <th>D</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            @if (atribut.TipMeritve == "NUM")
+                            {
+                                <InputNumber @bind-Value="atribut.VrednostLeva" class="form-control" />
+                            }
+                            else if (atribut.TipMeritve == "TF")
+                            {
+                                <InputCheckbox @bind-Value="atribut.TFVrednostLevaBool" />
+                            }
+                        </td>
+                        <td>
+                            @atribut.StandardnaVrednost
+                        </td>
+                        <td>
+                            @if (atribut.TipMeritve == "NUM")
+                            {
+                                <InputNumber @bind-Value="atribut.VrednostDesna" class="form-control" />
+                            }
+                            else if (atribut.TipMeritve == "TF")
+                            {
+                                <InputCheckbox @bind-Value="atribut.TFVrednostDesnaBool" />
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (!OcenaPotrjena)
+    {
+        <button class="btn btn-success mt-3" @onclick="PotrdiOceno">Potrdi oceno</button>
+    }
+    else
+    {
+        <div class="izbira-metode-box mt-3">
+            <label>Izberi metodo ocenjevanja:</label>
+            <select @bind="IzbranaMetoda" class="form-select">
+                <option value="standard">Glede na standard</option>
+                <option value="zdraviUd">Glede na zdravi ud</option>
+            </select>
+
+            <p class="mt-2">
+                <strong>Deficiti:</strong><br />
+                - Standard: @DeficitStandard?.ToString("0.0")%<br />
+                - Zdravi ud: @DeficitRelativno?.ToString("0.0")%
+            </p>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Segment Segment { get; set; }
+
+    private bool OcenaPotrjena = false;
+    private string IzbranaMetoda = "standard";
+    private decimal? DeficitStandard;
+    private decimal? DeficitRelativno;
+
+    private void PotrdiOceno()
+    {
+        var deficitiStandard = new List<decimal>();
+        var deficitiRelativno = new List<decimal>();
+
+        foreach (var atribut in Segment.Atributi)
+        {
+            decimal? leva = atribut.VrednostLeva;
+            decimal? desna = atribut.VrednostDesna;
+            decimal? standard = atribut.StandardnaVrednost;
+
+            // Izračun po standardu
+            if (standard.HasValue)
+            {
+                if (leva.HasValue)
+                    deficitiStandard.Add(CalcDeficit(standard.Value, leva.Value));
+                if (desna.HasValue)
+                    deficitiStandard.Add(CalcDeficit(standard.Value, desna.Value));
+            }
+
+            // Izračun po zdravi strani
+            if (leva.HasValue && desna.HasValue)
+            {
+                var referenca = Math.Max(leva.Value, desna.Value);
+                deficitiRelativno.Add(CalcDeficit(referenca, leva.Value));
+                deficitiRelativno.Add(CalcDeficit(referenca, desna.Value));
+            }
+        }
+
+        DeficitStandard = deficitiStandard.Any() ? deficitiStandard.Average() : null;
+        DeficitRelativno = deficitiRelativno.Any() ? deficitiRelativno.Average() : null;
+
+        OcenaPotrjena = true;
+    }
+
+    private decimal CalcDeficit(decimal standard, decimal dejanska)
+    {
+        if (standard == 0) return 0;
+        var razlika = Math.Abs(standard - dejanska);
+        return (razlika / standard) * 100;
+    }
+}

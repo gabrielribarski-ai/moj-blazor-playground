@@ -1,0 +1,44 @@
+﻿@page "/"
+@namespace IzracunInvalidnostiBlazor
+@inject  PogojService pogoji
+@inject UserSessionState SessionState
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+@inject SessionStorageService Storage
+@inject UserSessionState SessionState
+
+<h3>Izberi pogoj</h3>
+
+@if (pogoji.Seznam is null)
+{
+    <p>Nalaganje pogojev...</p>
+}
+else
+{
+    <select @onchange="OnPogojChanged">
+        <option value="">-- Izberi --</option>
+        @foreach (var pogoj in pogoji.Seznam)
+        {
+            <option value="@pogoj.PogojId">@pogoj.Koda</option>
+        }
+    </select>
+}
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+         await pogoji.PreberiPogoje();
+    }
+
+    private async Task OnPogojChanged(ChangeEventArgs e)
+    {
+        Console.WriteLine($"OnPogojChanged: {e.Value}");
+        //if (int.TryParse(e.Value?.ToString(), out var id))
+        {
+            SessionState.IzbraniPogojId = e.Value.ToString();
+            await Storage.SetItemAsync("izbraniPogojId", SessionState.IzbraniPogojId);
+            Nav.NavigateTo("/oceni-invalidnost");
+        }
+    }
+}

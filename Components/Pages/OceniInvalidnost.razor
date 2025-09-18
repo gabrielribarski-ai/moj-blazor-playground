@@ -1,0 +1,99 @@
+﻿@page "/oceni-invalidnost"
+@using IzracunInvalidnostiBlazor.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject UserSessionState SessionState
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@inject SegmentService segmenti
+@inject SessionStorageService Storage
+@inject PogojAtributNaborLoader AtributLoader
+
+
+<h3>Oceni invalidnost</h3>
+
+@if (segmentiZaPrikaz == null || TrenutniSegment == null)
+{
+    <p>Nalaganje podatkov...</p>
+}
+else
+{
+    var pot = segmenti.GetBreadcrumbPath(TrenutniSegment.SegmentId);
+    var otroci = segmenti.GetSegmentChildren(TrenutniSegment.SegmentId);
+
+    <div class="trenutna-pot-box">
+        @foreach (var korak in pot)
+        {
+            <span @onclick="@(() => NavigirajNaSegment(korak))"
+                  style="cursor:pointer; text-decoration:underline;">
+                @korak.Ime
+            </span>
+            @if (!ReferenceEquals(korak, pot.Last()))
+            {
+                <span> &gt; </span>
+            }
+        }
+    </div>
+
+    @* Prikažemo ocenjevalne atribute samo za AKTUALNI segment (TrenutniSegment),
+       ne pa za njegove otroke. *@
+    @if (TrenutniSegment.ImaOcenjevalneAtribute)
+    {
+        <OcenjevalniAtribut Segment="TrenutniSegment" />
+    }
+
+    @* Otroci so vedno navigacijski (klikabilni), ne glede na to, ali imajo atribute. *@
+    @foreach (var podsegment in otroci)
+    {
+        <DelTelesa Segment="podsegment" OnNavigate="NavigirajNaSegment" />
+    }
+}
+
+@code {
+    public List<Atribut> Atributi { get; set; } = new();
+    private bool _initialized = false;
+    private List<Segment> segmentiZaPrikaz = new();
+    private Segment? TrenutniSegment;
+    private List<Atribut>? vsiAtributi;
+    private List<Atribut> atributiZaTrenutniSegment = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            // (obstoječa inicializacija segmentov…)
+            await segmenti.PreberiSegmenteDB();
+            segmentiZaPrikaz = segmenti.GetRootSegments();
+            TrenutniSegment = segmenti.GetRootSegment();
+
+            // **novo**: naloži vse atribute za izbrani pogoj
+            if (int.TryParse(SessionState.IzbraniPogojId, out var pid))
+            {
+                vsiAtributi = await AtributLoader.LoadForPogojAsync(pid);
+                FiltrirajAtribute();
+            }
+
+            _initialized = true;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigirajNaSegment(Segment segment)
+    {
+        TrenutniSegment = segment;
+        FiltrirajAtribute();
+        StateHasChanged();
+    }
+
+    private void FiltrirajAtribute()
+    {
+        if (vsiAtributi is null || TrenutniSegment is null)
+        {
+            atributiZaTrenutniSegment.Clear();
+            return;
+        }
+
+        atributiZaTrenutniSegment = vsiAtributi
+            .Where(a => a.SegmentId == TrenutniSegment.SegmentId)
+            .ToList();
+    }
+}
