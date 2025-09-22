@@ -28,8 +28,9 @@ builder.Services.AddScoped<PogojAtributNaborLoader>();
 builder.Services.AddScoped<OcenjevalniModelLoader>();
 builder.Services.AddScoped<UserSessionState>();
 builder.Services.AddScoped<SessionStorageService>();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-
+Console.WriteLine("Program.cs");
 var app = builder.Build();
     // Configure the HTTP request pipeline. 
     if (!app.Environment.IsDevelopment())

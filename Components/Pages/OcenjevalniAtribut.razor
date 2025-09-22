@@ -2,6 +2,8 @@
 @inject UserSessionState SessionState
 @inject NavigationManager Nav
 @inject SessionStorageService Storage
+@inject ILogger<Index> Logger
+
 
 <div class="segment-box listni">
     <h4>@Segment.Opis</h4>
@@ -116,6 +118,11 @@
         DeficitRelativno = deficitiRelativno.Any() ? deficitiRelativno.Average() : null;
 
         OcenaPotrjena = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("OcenjevalniAtribut.razor->OnInitializedAsync");
     }
 
     private decimal CalcDeficit(decimal standard, decimal dejanska)

@@ -1,4 +1,7 @@
-﻿
+﻿@using IzracunInvalidnostiBlazor.Services
+@inject OcenjevalniModelLoader ocenjevalniModelLoader
+
+
 
 <div class="breadcrumb">
     @foreach (var segment in breadcrumb)
@@ -44,7 +47,7 @@ else
 
 
 @code {
-    [Inject] public SegmentService SegmentService { get; set; }
+
 
     private Segment? currentSegment;
     private List<Segment> children = new();
@@ -52,8 +55,8 @@ else
 
     protected async override void OnInitialized()
     {
-        await SegmentService.PreberiSegmenteDB();
-        currentSegment = SegmentService.GetRootSegments().FirstOrDefault(); // npr. TELO
+        //await ocenjevalniModelLoader.segment();
+        currentSegment = ocenjevalniModelLoader.GetRootSegments().FirstOrDefault(); // npr. TELO
         UpdateView();
     }
 
@@ -65,7 +68,7 @@ else
 
     private void UpdateView()
     {
-        children = SegmentService.GetSegmentChildren(currentSegment!.SegmentId);
-        breadcrumb = SegmentService.GetBreadcrumbPath(currentSegment.SegmentId);
+        children = ocenjevalniModelLoader.GetSegmentChildren(currentSegment!.SegmentId);
+        breadcrumb = ocenjevalniModelLoader.GetBreadcrumbPath(currentSegment.SegmentId);
     }
 }

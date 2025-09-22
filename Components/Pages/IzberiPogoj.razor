@@ -10,7 +10,7 @@
 
 <h3>Izberi pogoj</h3>
 
-@if (ocenjevalniModelLoader.ocenjevalniModel.PogojSeznam is null)
+@if (ocenjevalniModelLoader.PogojSeznam is null)
 {
     <p>Nalaganje pogojev...</p>
 }
@@ -18,7 +18,7 @@ else
 {
     <select @onchange="OnPogojChanged">
         <option value="">-- Izberi --</option>
-        @foreach (var pogoj in ocenjevalniModelLoader.ocenjevalniModel.PogojSeznam)
+        @foreach (var pogoj in ocenjevalniModelLoader.PogojSeznam)
         {
             <option value="@pogoj.PogojId">@pogoj.Sifra</option>
         }
@@ -36,8 +36,10 @@ else
     private async Task OnPogojChanged(ChangeEventArgs e)
     {
         Console.WriteLine($"OnPogojChanged: {e.Value}");
+        string izbranPogojId = e.Value.ToString();
         //if (int.TryParse(e.Value?.ToString(), out var id))
         {
+            ocenjevalniModelLoader.IzbranPogojSet(izbranPogojId);
             SessionState.IzbraniPogojId = e.Value.ToString();
             await Storage.SetItemAsync("izbraniPogojId", SessionState.IzbraniPogojId);
             Nav.NavigateTo("/oceni-invalidnost");
