@@ -1,16 +1,18 @@
 ﻿@page "/"
 @namespace IzracunInvalidnostiBlazor
+@using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject OcenjevalniModelLoader ocenjevalniModelLoader
-@inject UserSessionState SessionState
+@inject ProtectedSessionStorage SessionStorage
+@inject OcenjevalniModelSessionService ModelSession
 @inject NavigationManager Nav
 @rendermode InteractiveServer
-@inject SessionStorageService Storage
-@inject UserSessionState SessionState
+@inject OcenjevalniModelSessionService ModelStorageService
 
 <h3>Izberi pogoj</h3>
 
-@if (ocenjevalniModelLoader.PogojSeznam is null)
+@if (ocenjevalniModel.PogojSeznam is null)
 {
     <p>Nalaganje pogojev...</p>
 }
@@ -18,7 +20,7 @@ else
 {
     <select @onchange="OnPogojChanged">
         <option value="">-- Izberi --</option>
-        @foreach (var pogoj in ocenjevalniModelLoader.PogojSeznam)
+        @foreach (var pogoj in ocenjevalniModel.PogojSeznam)
         {
             <option value="@pogoj.PogojId">@pogoj.Sifra</option>
         }
@@ -26,23 +28,26 @@ else
 }
 
 @code {
+    private OcenjevalniModel ocenjevalniModel;
 
     protected override async Task OnInitializedAsync()
     {
         await ocenjevalniModelLoader.LoadPogojSeznamFromDB();
+        ocenjevalniModel = ocenjevalniModelLoader.OcenjevalniModel;
         StateHasChanged();
     }
 
     private async Task OnPogojChanged(ChangeEventArgs e)
-    {
-        Console.WriteLine($"OnPogojChanged: {e.Value}");
+    {        
         string izbranPogojId = e.Value.ToString();
-        //if (int.TryParse(e.Value?.ToString(), out var id))
-        {
-            ocenjevalniModelLoader.IzbranPogojSet(izbranPogojId);
-            SessionState.IzbraniPogojId = e.Value.ToString();
-            await Storage.SetItemAsync("izbraniPogojId", SessionState.IzbraniPogojId);
-            Nav.NavigateTo("/oceni-invalidnost");
-        }
+
+        ocenjevalniModel.IzbranPogoj = ocenjevalniModel.PogojSeznam.First(x => x.PogojId == izbranPogojId);
+        await ModelSession.SaveAsync(ocenjevalniModel);
+        var  ocenjevalniModel1 = await ModelStorageService.GetAsync();
+        Nav.NavigateTo("/oceni-invalidnost");
+
     }
+
+
+
 }

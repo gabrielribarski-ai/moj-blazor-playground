@@ -6,25 +6,32 @@ using System.Data;
 
 namespace IzracunInvalidnostiBlazor.Services
 {
-    public class OcenjevalniModelLoader: OcenjevalniModel
+    public class OcenjevalniModelLoader
     {
         private readonly IConfiguration _config;
 
         private readonly string connStr;
 
-       // public OcenjevalniModel ocenjevalniModel { get; set; }
+        public OcenjevalniModel OcenjevalniModel { get; set; }
+
+        // public OcenjevalniModel ocenjevalniModel { get; set; }
+
+        public OcenjevalniModelLoader() {
+            OcenjevalniModel = new OcenjevalniModel();
+        }
 
         public OcenjevalniModelLoader(IConfiguration config)
         {
             _config = config;
             this.connStr = _config.GetConnectionString("APL_INVALIDNOST");
+            OcenjevalniModel = new OcenjevalniModel();
             //ocenjevalniModel = new OcenjevalniModel();
         }
 
 
         public async Task LoadPogojSeznamFromDB()
         {
-            PogojSeznam = new List<Pogoj>();
+            OcenjevalniModel.PogojSeznam = new List<Pogoj>();
             using (var conn = new OracleConnection(connStr))
             {
                 conn.Open();
@@ -36,7 +43,7 @@ namespace IzracunInvalidnostiBlazor.Services
 
                 foreach (DataRow dr in dt.Rows)
                 {
-                    PogojSeznam.Add(new Pogoj
+                    OcenjevalniModel.PogojSeznam.Add(new Pogoj
                     {
                         PogojId = dr[0].ToString(),
                         Sifra = dr[1].ToString(),
@@ -49,18 +56,18 @@ namespace IzracunInvalidnostiBlazor.Services
 
         public async Task IzbranPogojSet(string pogojId)
         {
-            IzbranPogoj = new Pogoj();
-            IzbranPogoj = PogojSeznam.Where(x => x.PogojId == pogojId).First();
+            OcenjevalniModel.IzbranPogoj = new Pogoj();
+            OcenjevalniModel.IzbranPogoj = OcenjevalniModel.PogojSeznam.Where(x => x.PogojId == pogojId).First();
             // ko je izbran pogoj gremo naložit še ostale podatke
             LoadSegmentSeznamFromDB();
             // najprej kaže na root element
             //ocenjevalniModel.trenutniSegment = GetRootSegment();
-            TrenutniSegmentSet(GetRootSegment().SegmentId);
+            TrenutniSegmentSet(OcenjevalniModel.GetRootSegment().SegmentId);
         }
 
         public  async Task TrenutniSegmentSet(string trenutniSegmentId)
         {
-            this.trenutniSegment = SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
+            this.OcenjevalniModel.trenutniSegment = OcenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
 
             //this.ocenjevalniModel.trenutniSegment = ocenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
         }
@@ -77,7 +84,7 @@ namespace IzracunInvalidnostiBlazor.Services
 
         public async Task LoadSegmentSeznamFromDB()
         {
-            SegmentSeznam = new List<Segment>();
+            OcenjevalniModel.SegmentSeznam = new List<Segment>();
             using (var conn = new OracleConnection(this.connStr))
             {
                 conn.Open();
@@ -95,7 +102,7 @@ namespace IzracunInvalidnostiBlazor.Services
                     }
                     foreach (DataRow dr in dt.Rows)
                     {
-                        SegmentSeznam.Add(new Segment
+                        OcenjevalniModel.SegmentSeznam.Add(new Segment
                         {
                             SegmentId = dr["SEGMENT_ID"].ToString(),
                             Opis = dr["OPIS"].ToString(),
@@ -128,7 +135,7 @@ namespace IzracunInvalidnostiBlazor.Services
                         dt.Load(reader, LoadOption.PreserveChanges);
                     }
 
-                    foreach (Segment segment in this.SegmentSeznam)
+                    foreach (Segment segment in this.OcenjevalniModel.SegmentSeznam)
                     {
                         if (segment.ImaOcenjevalneAtribute)
                         {

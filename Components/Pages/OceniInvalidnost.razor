@@ -1,24 +1,25 @@
 ﻿@page "/oceni-invalidnost"
+@using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
 @using Microsoft.Extensions.Logging
-@inject SessionStorageService Storage
 @inject NavigationManager NavigationManager
 @inject SegmentService segmenti
 @inject PogojAtributNaborLoader AtributLoader
 @inject OcenjevalniModelLoader ocenjevalniModelLoader
 @inject ILogger<Index> Logger
 @rendermode InteractiveServer
+@inject OcenjevalniModelSessionService ModelStorageService
 
 <h3>Oceni invalidnost</h3>
 
-@if (ocenjevalniModelLoader?.trenutniSegment == null)
+@if (ocenjevalniModel?.trenutniSegment == null)
 {
     <p>Nalaganje podatkov...</p>
 }
 else
 {
     
-    var pot = ocenjevalniModelLoader.GetBreadcrumbPath(ocenjevalniModelLoader?.trenutniSegment?.SegmentId);
+    var pot = ocenjevalniModel.GetBreadcrumbPath(ocenjevalniModel?.trenutniSegment?.SegmentId);
     //var otroci = segmenti.GetSegmentChildren(TrenutniSegment.SegmentId);
     <div class="trenutna-pot-box">
         @foreach (var korak in pot)
@@ -36,14 +37,14 @@ else
     </div>
     
     
-    @if (ocenjevalniModelLoader?.AtributiZaPrikaz?.Count>0)
+    @if (ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
     {
-        <OcenjevalniAtribut Segment="ocenjevalniModelLoader?.trenutniSegment"
-                            Atributi="ocenjevalniModelLoader.AtributiZaPrikaz"
-                            @key="ocenjevalniModelLoader?.trenutniSegment?.SegmentId" />
+        <OcenjevalniAtribut Segment="ocenjevalniModel?.trenutniSegment"
+                            Atributi="ocenjevalniModel.AtributiZaPrikaz"
+                            @key="ocenjevalniModel?.trenutniSegment?.SegmentId" />
     }
     
-    @foreach (var podsegment in ocenjevalniModelLoader?.SegmentiZaPrikaz)
+    @foreach (var podsegment in ocenjevalniModel?.SegmentiZaPrikaz)
     {
         <DelTelesa Segment="podsegment"  OnNavigate="NavigirajNaSegment"  @key="podsegment.SegmentId" />
     }
@@ -54,14 +55,24 @@ else
     private bool _initialized = false;
     private Segment? TrenutniSegment;
 
+    private OcenjevalniModel ocenjevalniModel;
+
+
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Console.WriteLine("OnAfterRenderAsync");
-        Logger.LogInformation("OnAfterRenderAsync klican, firstRender={First}", firstRender);
         if (firstRender && !_initialized)
         {
-            var pogojIdStr = await Storage.GetItemAsync<string>("izbraniPogojId");
-            if (!int.TryParse(pogojIdStr, out var pogojId))
+            ocenjevalniModel = await ModelStorageService.GetAsync();
+
+            if (ocenjevalniModel.PogojSeznam == null || !ocenjevalniModel.PogojSeznam.Any())
+            {
+                // prvič naložimo iz baze
+                ocenjevalniModel = await ModelStorageService.GetAsync();
+                await ModelStorageService.SaveAsync(ocenjevalniModel);
+            }
+
+            //if (!int.TryParse(pogojIdStr, out var pogojId))
             {
                 NavigationManager.NavigateTo("/");
                 return;
@@ -73,7 +84,7 @@ else
     private async Task NavigirajNaSegment(Segment segment)
     {
         await ocenjevalniModelLoader.TrenutniSegmentSet(segment.SegmentId);
-        var atr = ocenjevalniModelLoader?.AtributiZaPrikaz;
+        var atr = ocenjevalniModel?.AtributiZaPrikaz;
         if (atr?.Count > 0)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(atr);

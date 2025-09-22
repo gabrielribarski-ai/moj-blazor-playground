@@ -14,7 +14,6 @@ namespace IzracunInvalidnostiBlazor.Models
         public string kjeSeNahajamo { get; set; }
 
 
-
         public List<Atribut> AtributiZaPrikaz
         {
             get
@@ -39,8 +38,6 @@ namespace IzracunInvalidnostiBlazor.Models
                     .ToList();
             }
         }
-
-
 
 
 
@@ -86,8 +83,6 @@ namespace IzracunInvalidnostiBlazor.Models
         {
             return SegmentSeznam.FirstOrDefault(s => s.Opis.Equals(ime, StringComparison.OrdinalIgnoreCase));
         }
-
-
 
 
         public List<Segment> GetRootSegments()

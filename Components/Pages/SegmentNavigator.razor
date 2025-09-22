@@ -1,4 +1,5 @@
-﻿@using IzracunInvalidnostiBlazor.Services
+﻿@using IzracunInvalidnostiBlazor.Models
+@using IzracunInvalidnostiBlazor.Services
 @inject OcenjevalniModelLoader ocenjevalniModelLoader
 
 
@@ -52,11 +53,13 @@ else
     private Segment? currentSegment;
     private List<Segment> children = new();
     private List<Segment> breadcrumb = new();
+    private OcenjevalniModel ocenjevalniModel;
+
 
     protected async override void OnInitialized()
     {
         //await ocenjevalniModelLoader.segment();
-        currentSegment = ocenjevalniModelLoader.GetRootSegments().FirstOrDefault(); // npr. TELO
+        currentSegment = ocenjevalniModel.GetRootSegments().FirstOrDefault(); // npr. TELO
         UpdateView();
     }
 
@@ -68,7 +71,7 @@ else
 
     private void UpdateView()
     {
-        children = ocenjevalniModelLoader.GetSegmentChildren(currentSegment!.SegmentId);
-        breadcrumb = ocenjevalniModelLoader.GetBreadcrumbPath(currentSegment.SegmentId);
+        children = ocenjevalniModel.GetSegmentChildren(currentSegment!.SegmentId);
+        breadcrumb = ocenjevalniModel.GetBreadcrumbPath(currentSegment.SegmentId);
     }
 }
