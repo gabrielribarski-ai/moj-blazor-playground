@@ -38,7 +38,7 @@ public class PogojService
             Seznam.Add(new Pogoj
             {
                 PogojId = dr[0].ToString(),
-                Koda = dr[1].ToString(),
+                Sifra = dr[1].ToString(),
                 Opis = dr[2].ToString()
             });
         }

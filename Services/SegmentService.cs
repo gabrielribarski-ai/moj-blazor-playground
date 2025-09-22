@@ -88,12 +88,11 @@ q += " FROM B1_SEGMENTI seg";
                 {
                     SegmentId = dr["SEGMENT_ID"].ToString(),
                     Opis = dr["OPIS"].ToString(),
-                    
                     NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
                     //Tip = reader.GetString(3),
                     Stranskost = dr["LDE"].ToString(),
                     Atributi = new List<Atribut>(),
-                    Children = new List<Segment>(),
+                    PodSegment = new List<Segment>(),
                     ImaOcenjevalneAtribute= dr["st_kriterijev"].ToString()!="0",
                 });
             }

@@ -17,14 +17,14 @@ public class Segment
     public string NadsegmentId { get; set; }
 
     // Povezani atributi (npr. gibljivost, brazgotina, dolžina)
-    public List<Atribut> Atributi { get; set; } = new();
+    public List<Atribut> Atributi { get; set; } 
 
     // Za gradnjo drevesa v aplikaciji
-    public List<Segment> Children { get; set; } = new();
+    public List<Segment> PodSegment { get; set; } 
 
     public bool ImaOcenjevalneAtribute { get; set; }
 
-    public bool OcenaPotrjena { get; set; }
+     public bool OcenaPotrjena { get; set; }
 
 
 }

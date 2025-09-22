@@ -25,6 +25,7 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddScoped<PogojService>();
 builder.Services.AddScoped<SegmentService>();
 builder.Services.AddScoped<PogojAtributNaborLoader>();
+builder.Services.AddScoped<OcenjevalniModelLoader>();
 builder.Services.AddScoped<UserSessionState>();
 builder.Services.AddScoped<SessionStorageService>();
 

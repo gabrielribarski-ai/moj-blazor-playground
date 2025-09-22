@@ -1,6 +1,7 @@
 ﻿@page "/"
 @namespace IzracunInvalidnostiBlazor
-@inject  PogojService pogoji
+@using IzracunInvalidnostiBlazor.Services
+@inject OcenjevalniModelLoader ocenjevalniModelLoader
 @inject UserSessionState SessionState
 @inject NavigationManager Nav
 @rendermode InteractiveServer
@@ -9,7 +10,7 @@
 
 <h3>Izberi pogoj</h3>
 
-@if (pogoji.Seznam is null)
+@if (ocenjevalniModelLoader.ocenjevalniModel.PogojSeznam is null)
 {
     <p>Nalaganje pogojev...</p>
 }
@@ -17,9 +18,9 @@ else
 {
     <select @onchange="OnPogojChanged">
         <option value="">-- Izberi --</option>
-        @foreach (var pogoj in pogoji.Seznam)
+        @foreach (var pogoj in ocenjevalniModelLoader.ocenjevalniModel.PogojSeznam)
         {
-            <option value="@pogoj.PogojId">@pogoj.Koda</option>
+            <option value="@pogoj.PogojId">@pogoj.Sifra</option>
         }
     </select>
 }
@@ -28,7 +29,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-         await pogoji.PreberiPogoje();
+        await ocenjevalniModelLoader.LoadPogojSeznamFromDB();
+        StateHasChanged();
     }
 
     private async Task OnPogojChanged(ChangeEventArgs e)
