@@ -22,9 +22,9 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<PogojAtributNaborLoader>();
 }*/
 
-builder.Services.AddScoped<PogojService>();
-builder.Services.AddScoped<SegmentService>();
-builder.Services.AddScoped<PogojAtributNaborLoader>();
+//builder.Services.AddScoped<PogojService>();
+//.Services.AddScoped<SegmentService>();
+//builder.Services.AddScoped<PogojAtributNaborLoader>();
 builder.Services.AddScoped<OcenjevalniModelLoader>();
 builder.Services.AddScoped<OcenjevalniModelSessionService>();
 builder.Logging.SetMinimumLevel(LogLevel.Information);

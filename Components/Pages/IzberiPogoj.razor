@@ -48,7 +48,7 @@ else
         ocenjevalniModel.IzbranPogojSet(izbranPogojId);
         ocenjevalniModelLoader.LoadSegmentSeznamFromDB();
         await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
-
+        ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
         Nav.NavigateTo("/oceni-invalidnost");
 
     }

@@ -60,28 +60,35 @@ else
 
 
 
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !_initialized)
         {
-            //ocenjevalniModel = await ModelStorageService.GetAsync();
-            ocenjevalniModel = new OcenjevalniModel();
-            await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
+            try
+            {
+                // Ensure JS interop is ready
+                await Task.Yield();
 
-            /*
-            if (ocenjevalniModel.PogojSeznam == null || !ocenjevalniModel.PogojSeznam.Any())
-            {
-                // prvič naložimo iz baze
-                ocenjevalniModel = await ModelStorageService.GetAsync();
-                await ModelStorageService.SaveAsync(ocenjevalniModel);
+                // IMPORTANT: assign the returned model
+                ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
+
+                _initialized = true;
+
+                // If you must navigate, do it based on a real condition
+                // e.g., redirect only if model is empty and you want home
+                // if (IsEmpty(ocenjevalniModel)) { NavigationManager.NavigateTo("/"); return; }
+
+                StateHasChanged(); // Optional; OnAfterRenderAsync usually doesn’t need it after firstRender
             }
-            */
-            //if (!int.TryParse(pogojIdStr, out var pogojId))
+            catch (InvalidOperationException ex)
             {
-                NavigationManager.NavigateTo("/");
-                return;
+                // Happens during prerender if JS isn't available
+                // Fallback: initialize a new model and retry later
+                ocenjevalniModel = new OcenjevalniModel();
+                _initialized = true;
+                // Consider logging ex.Message
             }
-            StateHasChanged();
         }
     }
 
