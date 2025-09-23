@@ -45,10 +45,12 @@ else
     private async Task OnPogojChanged(ChangeEventArgs e)
     {
         string izbranPogojId = e.Value.ToString();
-        ocenjevalniModel.IzbranPogojSet(izbranPogojId);
+
         ocenjevalniModelLoader.LoadSegmentSeznamFromDB();
-        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
-        ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
+        //await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+        ocenjevalniModel.IzbranPogojSet(izbranPogojId);
+        ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+        //ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
         Nav.NavigateTo("/oceni-invalidnost");
 
     }

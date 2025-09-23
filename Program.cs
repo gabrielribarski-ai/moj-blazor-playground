@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
     // Add services to the container. 
     builder.Services.AddRazorComponents()
         .AddInteractiveServerComponents();
+builder.Services.AddSignalR(hubOptions =>
+{
+    hubOptions.MaximumReceiveMessageSize = 1 * 1024 * 1024; // 1MB
+});
 
 /*
 if (builder.Environment.IsDevelopment())
@@ -22,14 +26,10 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<PogojAtributNaborLoader>();
 }*/
 
-//builder.Services.AddScoped<PogojService>();
-//.Services.AddScoped<SegmentService>();
-//builder.Services.AddScoped<PogojAtributNaborLoader>();
 builder.Services.AddScoped<OcenjevalniModelLoader>();
 builder.Services.AddScoped<OcenjevalniModelSessionService>();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-Console.WriteLine("Program.cs");
 var app = builder.Build();
     // Configure the HTTP request pipeline. 
     if (!app.Environment.IsDevelopment())

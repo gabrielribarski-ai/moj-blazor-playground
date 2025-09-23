@@ -82,10 +82,7 @@ namespace IzracunInvalidnostiBlazor.Models
         {
             IzbranPogoj = new Pogoj();
             IzbranPogoj = PogojSeznam.Where(x => x.PogojId == pogojId).First();
-            // ko je izbran pogoj gremo naložit še ostale podatke
-            //LoadSegmentSeznamFromDB();
             // najprej kaže na root element
-            //ocenjevalniModel.trenutniSegment = GetRootSegment();
             TrenutniSegmentSet(GetRootSegment().SegmentId);
         }
 

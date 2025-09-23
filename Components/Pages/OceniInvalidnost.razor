@@ -63,45 +63,32 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !_initialized)
+        if (firstRender)
         {
-            try
+            /*
+            var result = await SessionStorage.GetAsync<OcenjevalniModel>("OcenjevalniModel");
+            if (result.Success)
             {
-                // Ensure JS interop is ready
-                await Task.Yield();
-
-                // IMPORTANT: assign the returned model
-                ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
-
-                _initialized = true;
-
-                // If you must navigate, do it based on a real condition
-                // e.g., redirect only if model is empty and you want home
-                // if (IsEmpty(ocenjevalniModel)) { NavigationManager.NavigateTo("/"); return; }
-
-                StateHasChanged(); // Optional; OnAfterRenderAsync usually doesn’t need it after firstRender
+                //var tt1 = result.Value;
+                ocenjevalniModel = result.Value;
+                StateHasChanged();
             }
-            catch (InvalidOperationException ex)
-            {
-                // Happens during prerender if JS isn't available
-                // Fallback: initialize a new model and retry later
-                ocenjevalniModel = new OcenjevalniModel();
-                _initialized = true;
-                // Consider logging ex.Message
-            }
+            */
+            ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
+            StateHasChanged(); // Optional; OnAfterRenderAsync usually doesn’t need it after firstRender
         }
     }
 
     private async Task NavigirajNaSegment(Segment segment)
     {
-        await ocenjevalniModelLoader.TrenutniSegmentSet(segment.SegmentId);
+        await ocenjevalniModel.TrenutniSegmentSet(segment.SegmentId);
         var atr = ocenjevalniModel?.AtributiZaPrikaz;
         if (atr?.Count > 0)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(atr);
             Logger.LogInformation("ocenjevalniModelLoader?.ocenjevalniModel?.AtributiZaPrikaz", json);
         }
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     /*

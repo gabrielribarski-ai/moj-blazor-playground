@@ -54,33 +54,7 @@ namespace IzracunInvalidnostiBlazor.Services
         }
 
 
-        public async Task IzbranPogojSet(string pogojId)
-        {
-            OcenjevalniModel.IzbranPogoj = new Pogoj();
-            OcenjevalniModel.IzbranPogoj = OcenjevalniModel.PogojSeznam.Where(x => x.PogojId == pogojId).First();
-            // ko je izbran pogoj gremo naložit še ostale podatke
-            LoadSegmentSeznamFromDB();
-            // najprej kaže na root element
-            //ocenjevalniModel.trenutniSegment = GetRootSegment();
-            TrenutniSegmentSet(OcenjevalniModel.GetRootSegment().SegmentId);
-        }
 
-        public  async Task TrenutniSegmentSet(string trenutniSegmentId)
-        {
-            this.OcenjevalniModel.trenutniSegment = OcenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
-
-            //this.ocenjevalniModel.trenutniSegment = ocenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
-        }
-
-        /*
-        public async Task IzbranPogojSet(string pogojSifra)
-        {
-            ocenjevalniModel.IzbranPogoj = new Pogoj();
-            ocenjevalniModel.IzbranPogoj = ocenjevalniModel.PogojSeznam.Where(x => x.Sifra == pogojSifra).First();
-            // ko je izbran pogoj gremo naložit še ostale podatke
-            LoadSegmentSeznamFromDB();
-        }
-        */
 
         public async Task LoadSegmentSeznamFromDB()
         {
