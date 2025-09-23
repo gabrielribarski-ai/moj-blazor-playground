@@ -1,14 +1,15 @@
 ﻿@page "/oceni-invalidnost"
+@using IzracunInvalidnostiBlazor.Extensions
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.Extensions.Logging
 @inject NavigationManager NavigationManager
-@inject SegmentService segmenti
-@inject PogojAtributNaborLoader AtributLoader
 @inject OcenjevalniModelLoader ocenjevalniModelLoader
+@inject ProtectedSessionStorage SessionStorage
 @inject ILogger<Index> Logger
 @rendermode InteractiveServer
-@inject OcenjevalniModelSessionService ModelStorageService
+
 
 <h3>Oceni invalidnost</h3>
 
@@ -63,15 +64,18 @@ else
     {
         if (firstRender && !_initialized)
         {
-            ocenjevalniModel = await ModelStorageService.GetAsync();
+            //ocenjevalniModel = await ModelStorageService.GetAsync();
+            ocenjevalniModel = new OcenjevalniModel();
+            await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
 
+            /*
             if (ocenjevalniModel.PogojSeznam == null || !ocenjevalniModel.PogojSeznam.Any())
             {
                 // prvič naložimo iz baze
                 ocenjevalniModel = await ModelStorageService.GetAsync();
                 await ModelStorageService.SaveAsync(ocenjevalniModel);
             }
-
+            */
             //if (!int.TryParse(pogojIdStr, out var pogojId))
             {
                 NavigationManager.NavigateTo("/");

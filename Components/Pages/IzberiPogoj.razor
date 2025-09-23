@@ -1,5 +1,6 @@
 ﻿@page "/"
 @namespace IzracunInvalidnostiBlazor
+@using IzracunInvalidnostiBlazor.Extensions
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
@@ -34,16 +35,20 @@ else
     {
         await ocenjevalniModelLoader.LoadPogojSeznamFromDB();
         ocenjevalniModel = ocenjevalniModelLoader.OcenjevalniModel;
-        StateHasChanged();
+        //await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+        // ocenjevalniModelLoader del = await _model.ReadFromSessionStorage(SessionStorage);
+
+        // ocenjevalniModel = ocenjevalniModelLoader.OcenjevalniModel;
+        // StateHasChanged();
     }
 
     private async Task OnPogojChanged(ChangeEventArgs e)
-    {        
+    {
         string izbranPogojId = e.Value.ToString();
+        ocenjevalniModel.IzbranPogojSet(izbranPogojId);
+        ocenjevalniModelLoader.LoadSegmentSeznamFromDB();
+        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
 
-        ocenjevalniModel.IzbranPogoj = ocenjevalniModel.PogojSeznam.First(x => x.PogojId == izbranPogojId);
-        await ModelSession.SaveAsync(ocenjevalniModel);
-        var  ocenjevalniModel1 = await ModelStorageService.GetAsync();
         Nav.NavigateTo("/oceni-invalidnost");
 
     }

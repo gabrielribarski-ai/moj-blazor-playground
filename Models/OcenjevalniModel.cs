@@ -28,7 +28,6 @@ namespace IzracunInvalidnostiBlazor.Models
 
         public List<Segment> SegmentiZaPrikaz
         {
-
             get
             {
                 if (SegmentSeznam == null)
@@ -78,6 +77,24 @@ namespace IzracunInvalidnostiBlazor.Models
             return path;
         }
 
+
+        public async Task IzbranPogojSet(string pogojId)
+        {
+            IzbranPogoj = new Pogoj();
+            IzbranPogoj = PogojSeznam.Where(x => x.PogojId == pogojId).First();
+            // ko je izbran pogoj gremo naložit še ostale podatke
+            //LoadSegmentSeznamFromDB();
+            // najprej kaže na root element
+            //ocenjevalniModel.trenutniSegment = GetRootSegment();
+            TrenutniSegmentSet(GetRootSegment().SegmentId);
+        }
+
+        public async Task TrenutniSegmentSet(string trenutniSegmentId)
+        {
+            this.trenutniSegment = SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
+
+            //this.ocenjevalniModel.trenutniSegment = ocenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
+        }
 
         public Segment? FindSegmentByName(string ime)
         {
