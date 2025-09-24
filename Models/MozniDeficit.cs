@@ -6,7 +6,7 @@ namespace IzracunInvalidnostiBlazor.Models
     {
         public MoznaPrimerjava moznePrimerjave { get; set; }
         public decimal? Deficit { get; set; }
-        public decimal? Odstotek { get; set; }
+        public decimal? IzracunaniOdstotek { get; set; }
         public StranLDE StranLDE { get; set; }
     }
 }

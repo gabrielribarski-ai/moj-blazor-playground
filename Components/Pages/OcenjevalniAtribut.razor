@@ -110,9 +110,7 @@
 
 
 
-
-
-    private MozniDeficit MakeDeficit(MoznaPrimerjava tip, decimal dejanska, decimal referenca, StranLDE stranLDE)
+    private MozniDeficit? MakeDeficit(MoznaPrimerjava tip, decimal dejanska, decimal referenca, StranLDE stranLDE)
     {
         if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E && stranLDE != StranLDE.E)
             return null;
@@ -120,13 +118,21 @@
         if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD && stranLDE == StranLDE.E)
             return null;
 
+        var deficit = CalcDeficit(dejanska, referenca);
+
+        // zberi vse stopnje iz atributov trenutnega segmenta
+        var vseStopnje = Segment.Atributi.SelectMany(a => a.Stopnje).ToList();
+
         return new MozniDeficit
         {
             moznePrimerjave = tip,
-            Deficit = CalcDeficit(dejanska, referenca),
-            StranLDE = stranLDE
+            Deficit = deficit,
+            StranLDE = stranLDE,
+            IzracunaniOdstotek = IzracunajInvalidnost(deficit, vseStopnje)
         };
     }
+
+
 
     public void IzracunajDeficit()
     {
@@ -193,6 +199,46 @@
         var razlika = Math.Abs(referenca - dejanska);
         return Math.Round((razlika / referenca) * 100, 2);
     }
+
+
+    private decimal? IzracunajInvalidnost(decimal deficit, List<StopnjaDeficita> stopnje)
+    {
+        if (stopnje == null || stopnje.Count == 0)
+            return null;
+
+        var ordered = stopnje.OrderBy(s => s.ZapSt).ToList();
+
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            var s = ordered[i];
+
+            // Fiksna stopnja
+            if (s.OdstotekFR == OdstotekFR.F && deficit <= s.ObmocjeNum)
+            {
+                return s.StopnjaNum;
+            }
+
+            // Relativna stopnja
+            if (s.OdstotekFR == OdstotekFR.R && i < ordered.Count - 1)
+            {
+                var next = ordered[i + 1];
+
+                if (deficit > s.ObmocjeNum && deficit <= next.ObmocjeNum)
+                {
+                    // linearna interpolacija med StopnjaNum vrednostmi
+                    var range = next.ObmocjeNum - s.ObmocjeNum;
+                    var pos = (deficit - s.ObmocjeNum) / range;
+
+                    var valueRange = next.StopnjaNum - s.StopnjaNum;
+                    return s.StopnjaNum + pos * valueRange;
+                }
+            }
+        }
+
+        // če preseže vse stopnje, vrni max
+        return ordered.Last().StopnjaNum;
+    }
+
 
 
 }
