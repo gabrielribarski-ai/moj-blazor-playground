@@ -9,9 +9,7 @@ namespace IzracunInvalidnostiBlazor
 
     public class Atribut
     {
-        // obstoječe
-        public decimal? VrednostLeva { get; set; }
-        public decimal? VrednostDesna { get; set; }
+
         public decimal? StandardnaVrednost { get; set; }
 
         public AtributOcena Ocena { get; set; }
@@ -24,36 +22,5 @@ namespace IzracunInvalidnostiBlazor
         public  TipMeritveEnum TipMeritve { get; set; } = TipMeritveEnum.NUM;
         public string Enota { get; set; } = string.Empty;
 
-        // novo: podatki iz B1_POGOJ_ATRIBUT_STOPNJA
-
-
-        // Izračun: izračunani deficit in izbrana stopnja
-        public decimal? Deficit { get; private set; }
-        public string IzbranaStopnja { get; private set; } = string.Empty;
-
-        // Metoda, ki po vnosu vrednosti izračuna Deficit
-        public void IzracunajDeficitLevega()
-        {
-            if (VrednostLeva is null || StandardnaVrednost is null) return;
-            var rezultat = StopnjaEvaluator.Izracunaj(
-                izmerjeno: VrednostLeva.Value,
-                referenca: StandardnaVrednost.Value,
-                pasovi: Stopnje
-            );
-            Deficit = rezultat.MaxProcent;
-            IzbranaStopnja = rezultat.Stopnja;
-        }
-
-        public void IzracunajDeficitDesnega()
-        {
-            if (VrednostDesna is null || StandardnaVrednost is null) return;
-            var rezultat = StopnjaEvaluator.Izracunaj(
-                izmerjeno: VrednostDesna.Value,
-                referenca: StandardnaVrednost.Value,
-                pasovi: Stopnje
-            );
-            Deficit = rezultat.MaxProcent;
-            IzbranaStopnja = rezultat.Stopnja;
-        }
     }
 }

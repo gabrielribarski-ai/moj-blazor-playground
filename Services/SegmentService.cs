@@ -6,6 +6,7 @@ using System.Data;
 using System.Reflection.PortableExecutable;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using CustomTypeExtensions;
+using IzracunInvalidnostiBlazor.Models;
 
 namespace IzracunInvalidnostiBlazor;
 

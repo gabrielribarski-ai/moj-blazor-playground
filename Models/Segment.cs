@@ -1,5 +1,7 @@
 ﻿/* filename: Segment.cs  */
-namespace IzracunInvalidnostiBlazor;
+
+namespace IzracunInvalidnostiBlazor.Models;
+    
 
 // L/D/oboje – za stranskost telesa
 public enum SimetrijaDelaTelesa
@@ -24,6 +26,9 @@ public class Segment
     // Povezani atributi (npr. gibljivost, brazgotina, dolžina)
     public List<Atribut> Atributi { get; set; }
 
+    public IzmerjeniDeficit IzmerjeniDeficit { get; set; }
+
+    public List<MozniDeficit> MozniDeficitNabor { get; set; }
 
     // Za gradnjo drevesa v aplikaciji
     public List<Segment> PodSegment { get; set; } 

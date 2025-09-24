@@ -3,6 +3,7 @@
 @using System.Text.Json
 @using CustomTypeExtensions
 @using static IzracunInvalidnostiBlazor.OcenjevalniAtribut
+@using IzracunInvalidnostiBlazor.Models
 @using Microsoft.Extensions.Logging
 @inject NavigationManager Nav
 @inject ILogger<Index> Logger
@@ -107,32 +108,8 @@
         E_primerjava_S //E
     }
 
-    public class IzmerjeniDelTelesaDeficit
-    {
-        public Segment IzmerjeniDelTelesa { get; set; }
-        public decimal StandardSkupaj { get; set; }
-        public decimal GibljivostSkupajL { get; set; }
-        public decimal PolovicaGibljivostiL { get; set; }
-        public decimal TretjinaGibljivostiL { get; set; }
-
-        public decimal GibljivostSkupajD { get; set; }
-        public decimal PolovicaGibljivostiD { get; set; }
-        public decimal TretjinaGibljivostiD { get; set; }
-
-        public decimal GibljivostSkupajE { get; set; }
-        public decimal PolovicaGibljivostiE { get; set; }
-        public decimal TretjinaGibljivostiE { get; set; }
-    }
-
-    public class MozniDeficit
-    {
-        public MoznaPrimerjava moznePrimerjave { get; set; }
-        public decimal? Deficit { get; set; }
-        public decimal? Odstotek { get; set; }
-        public StranLDE StranLDE { get; set; }
 
 
-    }
 
 
     private MozniDeficit MakeDeficit(MoznaPrimerjava tip, decimal dejanska, decimal referenca, StranLDE stranLDE)
@@ -143,7 +120,7 @@
         if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD && stranLDE == StranLDE.E)
             return null;
 
-    return new MozniDeficit
+        return new MozniDeficit
         {
             moznePrimerjave = tip,
             Deficit = CalcDeficit(dejanska, referenca),
@@ -153,27 +130,25 @@
 
     public void IzracunajDeficit()
     {
-        var izmerjeniDelTelesaDeficit = new IzmerjeniDelTelesaDeficit
-            {
-                IzmerjeniDelTelesa = Segment
-            };
+        Segment.IzmerjeniDeficit = new();
+
 
         var simetrija = Segment.SimetrijaDelaTelesa;  // enum, ki vrne LD ali E
         // seštej vse vrednosti v enem koraku
-        izmerjeniDelTelesaDeficit.GibljivostSkupajL = Atributi.Sum(atr => atr.Ocena.VrednostL.AsDecimal());
-        izmerjeniDelTelesaDeficit.GibljivostSkupajD = Atributi.Sum(atr => atr.Ocena.VrednostD.AsDecimal());
-        izmerjeniDelTelesaDeficit.GibljivostSkupajE = Atributi.Sum(atr => atr.Ocena.VrednostE.AsDecimal());
-        izmerjeniDelTelesaDeficit.StandardSkupaj = Atributi.Sum(atr => atr.StandardnaVrednost.AsDecimal());
+        Segment.IzmerjeniDeficit.GibljivostSkupajL = Atributi.Sum(atr => atr.Ocena.VrednostL.AsDecimal());
+        Segment.IzmerjeniDeficit.GibljivostSkupajD = Atributi.Sum(atr => atr.Ocena.VrednostD.AsDecimal());
+        Segment.IzmerjeniDeficit.GibljivostSkupajE = Atributi.Sum(atr => atr.Ocena.VrednostE.AsDecimal());
+        Segment.IzmerjeniDeficit.StandardSkupaj = Atributi.Sum(atr => atr.StandardnaVrednost.AsDecimal());
 
         List<MozniDeficit> deficiti = new List<MozniDeficit>();
 
         var kandidati = new[]
         {
-            MakeDeficit(MoznaPrimerjava.E_primerjava_S, izmerjeniDelTelesaDeficit.GibljivostSkupajE, izmerjeniDelTelesaDeficit.StandardSkupaj, StranLDE.E),
-            MakeDeficit(MoznaPrimerjava.D_primerjava_S, izmerjeniDelTelesaDeficit.GibljivostSkupajD, izmerjeniDelTelesaDeficit.StandardSkupaj, StranLDE.D),
-            MakeDeficit(MoznaPrimerjava.L_primerjava_S, izmerjeniDelTelesaDeficit.GibljivostSkupajL, izmerjeniDelTelesaDeficit.StandardSkupaj, StranLDE.L),
-            MakeDeficit(MoznaPrimerjava.L_primerjava_D, izmerjeniDelTelesaDeficit.GibljivostSkupajL, izmerjeniDelTelesaDeficit.GibljivostSkupajD, StranLDE.L),
-            MakeDeficit(MoznaPrimerjava.D_primerjava_L, izmerjeniDelTelesaDeficit.GibljivostSkupajD, izmerjeniDelTelesaDeficit.GibljivostSkupajL, StranLDE.D)
+            MakeDeficit(MoznaPrimerjava.E_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajE, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.E),
+            MakeDeficit(MoznaPrimerjava.D_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.D),
+            MakeDeficit(MoznaPrimerjava.L_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.L),
+            MakeDeficit(MoznaPrimerjava.L_primerjava_D, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.GibljivostSkupajD, StranLDE.L),
+            MakeDeficit(MoznaPrimerjava.D_primerjava_L, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.GibljivostSkupajL, StranLDE.D)
         };
 
         //Logger.LogInformation("L_primerjava_D" + " : " + deficiti.Last().Deficit);
@@ -194,18 +169,22 @@
     private void PotrdiOceno()
     {
         IzracunajDeficit();
+        log_segment();
 
+    }
+
+    private void log_segment()
+    {
+        var json = JsonSerializer.Serialize(Segment, new JsonSerializerOptions { WriteIndented = true });
+        Logger.LogInformation("OcenjevalniAtribut.razor->Segment {json}", json);
     }
 
     protected override async Task OnInitializedAsync()
     {
-        var json = JsonSerializer.Serialize(Atributi, new JsonSerializerOptions { WriteIndented = true});
-
         foreach (Atribut atr in Atributi)
         {
             atr.Ocena = new();    
         }
-        Logger.LogInformation("OcenjevalniAtribut.RAZOR->OnInitializedAsync {json}", json);
     }
 
     private decimal CalcDeficit(decimal dejanska, decimal referenca)
