@@ -3,34 +3,30 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IzracunInvalidnostiBlazor
 {
-    public enum TipMeritveEnum { NUM, BOOL };
-
-    public enum StranLDE  { L, D, E }
-
-    public class Atribut
+    public class AtributOcena
     {
         // obstoječe
-        public decimal? VrednostLeva { get; set; }
-        public decimal? VrednostDesna { get; set; }
-        public decimal? StandardnaVrednost { get; set; }
+        public decimal? VrednostL { get; set; }
+        public decimal? VrednostD { get; set; }
 
-        public AtributOcena Ocena { get; set; }
+        public decimal? VrednostE { get; set; }
 
-        public List<StopnjaDeficita> Stopnje { get; set; } = new();
+        public bool VrednostL_Bool { get; set; }
+        public bool VrednostD_Bool { get; set; }
 
-        public string AtributId { get; set; }
-        public string SegmentId { get; set; }
+        public bool VrednostE_Bool { get; set; }
+
         public string Opis { get; set; } = string.Empty;
-        public  TipMeritveEnum TipMeritve { get; set; } = TipMeritveEnum.NUM;
+        public TipMeritveEnum TipMeritve { get; set; } = TipMeritveEnum.NUM;
+        public StranLDE StranLDE { get; set; } 
         public string Enota { get; set; } = string.Empty;
-
-        // novo: podatki iz B1_POGOJ_ATRIBUT_STOPNJA
 
 
         // Izračun: izračunani deficit in izbrana stopnja
         public decimal? Deficit { get; private set; }
         public string IzbranaStopnja { get; private set; } = string.Empty;
 
+        /*
         // Metoda, ki po vnosu vrednosti izračuna Deficit
         public void IzracunajDeficitLevega()
         {
@@ -55,5 +51,6 @@ namespace IzracunInvalidnostiBlazor
             Deficit = rezultat.MaxProcent;
             IzbranaStopnja = rezultat.Stopnja;
         }
+        */
     }
 }

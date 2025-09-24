@@ -128,7 +128,8 @@ namespace CustomTypeExtensions
             return result;
         }
 
-        public static bool ToBool(this object input, bool default_ = false)
+        
+        public static bool AsBool(this object input, bool default_ = false)
         {
             bool result = default_;
             if (input != null && input is bool)
@@ -138,7 +139,7 @@ namespace CustomTypeExtensions
             return result;
         }
 
-        public static decimal? ToDecimal(this object input, decimal? default_ = null)
+        public static decimal? AsDecimal(this object input, decimal? default_ = null)
         {
             decimal? result = default_;
             if (input != null && input is decimal)
@@ -148,14 +149,25 @@ namespace CustomTypeExtensions
             return result;
         }
 
+        
+        public static decimal AsDecimal(this decimal? value, decimal defaultValue = 0m)
+        {
+            return value ?? defaultValue;
+        }
+
         public static int? ToInt(this object input, int? default_ = null)
         {
-            int? result = default_;
-            if (input != null && input is int)
-                result = (int)input;
-            else if (input != null && input is string)
-                result = int.Parse(input.ToString());
-            return result;
+            if (input == null || input == DBNull.Value)
+                return default_;
+
+            try
+            {
+                return Convert.ToInt32(input);
+            }
+            catch
+            {
+                return default_;
+            }
         }
 
 

@@ -4,16 +4,19 @@
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.Extensions.Logging
+@inject ILogger<Index> Logger
 @inject OcenjevalniModelLoader ocenjevalniModelLoader
 @inject ProtectedSessionStorage SessionStorage
 @inject OcenjevalniModelSessionService ModelSession
 @inject NavigationManager Nav
-@rendermode InteractiveServer
+
 @inject OcenjevalniModelSessionService ModelStorageService
+
 
 <h3>Izberi pogoj</h3>
 
-@if (ocenjevalniModel.PogojSeznam is null)
+@if ( !ocenjevalniModelLoader.IsPogojiSeznamLoaded)
 {
     <p>Nalaganje pogojev...</p>
 }
@@ -31,6 +34,7 @@ else
 @code {
     private OcenjevalniModel ocenjevalniModel;
 
+
     protected override async Task OnInitializedAsync()
     {
         await ocenjevalniModelLoader.LoadPogojSeznamFromDB();
@@ -46,10 +50,11 @@ else
     {
         string izbranPogojId = e.Value.ToString();
 
-        ocenjevalniModelLoader.LoadSegmentSeznamFromDB();
+        await ocenjevalniModelLoader.LoadSegmentSeznamFromDB();
         //await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
-        ocenjevalniModel.IzbranPogojSet(izbranPogojId);
-        ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+        await ocenjevalniModel.IzbranPogojSet(izbranPogojId);
+        await ocenjevalniModelLoader.PreberiStopnjeDB_Sync(izbranPogojId);
+        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
         //ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
         Nav.NavigateTo("/oceni-invalidnost");
 

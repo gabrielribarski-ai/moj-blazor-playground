@@ -1,7 +1,11 @@
-﻿@namespace IzracunInvalidnostiBlazor
+﻿@*** filename: OcenjevalniAtribut.razor ****@
+@namespace IzracunInvalidnostiBlazor
+@using System.Text.Json
+@using CustomTypeExtensions
+@using static IzracunInvalidnostiBlazor.OcenjevalniAtribut
+@using Microsoft.Extensions.Logging
 @inject NavigationManager Nav
 @inject ILogger<Index> Logger
-
 
 <div class="segment-box listni">
     <h4>@Segment.Opis</h4>
@@ -14,6 +18,7 @@
             <table class="atribut-tabela">
                 <thead>
                     <tr>
+                        <th>E</th>
                         <th>L</th>
                         <th>S</th>
                         <th>D</th>
@@ -22,26 +27,37 @@
                 <tbody>
                     <tr>
                         <td>
-                            @if (atribut.TipMeritve == "NUM")
+
+                            @if (atribut.TipMeritve == TipMeritveEnum.NUM)
                             {
-                                <InputNumber @bind-Value="atribut.VrednostLeva" class="form-control" />
+                                <InputNumber @bind-Value="atribut.Ocena.VrednostE" class="form-control" />
                             }
-                            else if (atribut.TipMeritve == "TF")
+                            else @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
                             {
-                                <InputCheckbox @bind-Value="atribut.TFVrednostLevaBool" />
+                                <InputCheckbox @bind-Value="atribut.Ocena.VrednostE_Bool" />
+                            }
+                        </td>
+                        <td>
+                            @if (atribut.TipMeritve == TipMeritveEnum.NUM)
+                            {
+                                <InputNumber @bind-Value="atribut.Ocena.VrednostL" class="form-control" />
+                            }
+                            else @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
+                            {
+                                <InputCheckbox @bind-Value="atribut.Ocena.VrednostL_Bool" />
                             }
                         </td>
                         <td>
                             @atribut.StandardnaVrednost
                         </td>
                         <td>
-                            @if (atribut.TipMeritve == "NUM")
+                            @if (atribut.TipMeritve == TipMeritveEnum.NUM)
                             {
-                                <InputNumber @bind-Value="atribut.VrednostDesna" class="form-control" />
+                                <InputNumber @bind-Value="atribut.Ocena.VrednostD" class="form-control" />
                             }
-                            else if (atribut.TipMeritve == "TF")
+                            else @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
                             {
-                                <InputCheckbox @bind-Value="atribut.TFVrednostDesnaBool" />
+                                <InputCheckbox @bind-Value="atribut.Ocena.VrednostD_Bool" />
                             }
                         </td>
                     </tr>
@@ -73,60 +89,131 @@
 </div>
 
 @code {
-  
+
     [Parameter] public Segment Segment { get; set; } = default!;
     [Parameter] public List<Atribut> Atributi { get; set; } = new();
-
 
     private bool OcenaPotrjena = false;
     private string IzbranaMetoda = "standard";
     private decimal? DeficitStandard;
     private decimal? DeficitRelativno;
 
+    public enum MoznaPrimerjava
+    {
+        L_primerjava_S, //LD
+        D_primerjava_S, //LD
+        L_primerjava_D, //LD
+        D_primerjava_L,//LD
+        E_primerjava_S //E
+    }
+
+    public class IzmerjeniDelTelesaDeficit
+    {
+        public Segment IzmerjeniDelTelesa { get; set; }
+        public decimal StandardSkupaj { get; set; }
+        public decimal GibljivostSkupajL { get; set; }
+        public decimal PolovicaGibljivostiL { get; set; }
+        public decimal TretjinaGibljivostiL { get; set; }
+
+        public decimal GibljivostSkupajD { get; set; }
+        public decimal PolovicaGibljivostiD { get; set; }
+        public decimal TretjinaGibljivostiD { get; set; }
+
+        public decimal GibljivostSkupajE { get; set; }
+        public decimal PolovicaGibljivostiE { get; set; }
+        public decimal TretjinaGibljivostiE { get; set; }
+    }
+
+    public class MozniDeficit
+    {
+        public MoznaPrimerjava moznePrimerjave { get; set; }
+        public decimal? Deficit { get; set; }
+        public decimal? Odstotek { get; set; }
+        public StranLDE StranLDE { get; set; }
+
+
+    }
+
+
+    private MozniDeficit MakeDeficit(MoznaPrimerjava tip, decimal dejanska, decimal referenca, StranLDE stranLDE)
+    {
+        if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E && stranLDE != StranLDE.E)
+            return null;
+
+        if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD && stranLDE == StranLDE.E)
+            return null;
+
+    return new MozniDeficit
+        {
+            moznePrimerjave = tip,
+            Deficit = CalcDeficit(dejanska, referenca),
+            StranLDE = stranLDE
+        };
+    }
+
+    public void IzracunajDeficit()
+    {
+        var izmerjeniDelTelesaDeficit = new IzmerjeniDelTelesaDeficit
+            {
+                IzmerjeniDelTelesa = Segment
+            };
+
+        var simetrija = Segment.SimetrijaDelaTelesa;  // enum, ki vrne LD ali E
+        // seštej vse vrednosti v enem koraku
+        izmerjeniDelTelesaDeficit.GibljivostSkupajL = Atributi.Sum(atr => atr.Ocena.VrednostL.AsDecimal());
+        izmerjeniDelTelesaDeficit.GibljivostSkupajD = Atributi.Sum(atr => atr.Ocena.VrednostD.AsDecimal());
+        izmerjeniDelTelesaDeficit.GibljivostSkupajE = Atributi.Sum(atr => atr.Ocena.VrednostE.AsDecimal());
+        izmerjeniDelTelesaDeficit.StandardSkupaj = Atributi.Sum(atr => atr.StandardnaVrednost.AsDecimal());
+
+        List<MozniDeficit> deficiti = new List<MozniDeficit>();
+
+        var kandidati = new[]
+        {
+            MakeDeficit(MoznaPrimerjava.E_primerjava_S, izmerjeniDelTelesaDeficit.GibljivostSkupajE, izmerjeniDelTelesaDeficit.StandardSkupaj, StranLDE.E),
+            MakeDeficit(MoznaPrimerjava.D_primerjava_S, izmerjeniDelTelesaDeficit.GibljivostSkupajD, izmerjeniDelTelesaDeficit.StandardSkupaj, StranLDE.D),
+            MakeDeficit(MoznaPrimerjava.L_primerjava_S, izmerjeniDelTelesaDeficit.GibljivostSkupajL, izmerjeniDelTelesaDeficit.StandardSkupaj, StranLDE.L),
+            MakeDeficit(MoznaPrimerjava.L_primerjava_D, izmerjeniDelTelesaDeficit.GibljivostSkupajL, izmerjeniDelTelesaDeficit.GibljivostSkupajD, StranLDE.L),
+            MakeDeficit(MoznaPrimerjava.D_primerjava_L, izmerjeniDelTelesaDeficit.GibljivostSkupajD, izmerjeniDelTelesaDeficit.GibljivostSkupajL, StranLDE.D)
+        };
+
+        //Logger.LogInformation("L_primerjava_D" + " : " + deficiti.Last().Deficit);
+        deficiti.AddRange(kandidati.Where(d => d != null)!);
+
+        foreach (var d in deficiti)
+        {
+            Logger.LogInformation(
+                "Primerjava: {Primerjava}, Stran: {Stran}, Deficit: {Deficit}%",
+                d.moznePrimerjave,
+                d.StranLDE,
+                d.Deficit?.ToString("0.00")
+            );
+        }
+    }
+
+
     private void PotrdiOceno()
     {
-        var deficitiStandard = new List<decimal>();
-        var deficitiRelativno = new List<decimal>();
+        IzracunajDeficit();
 
-        foreach (var atribut in Segment.Atributi)
-        {
-            decimal? leva = atribut.VrednostLeva;
-            decimal? desna = atribut.VrednostDesna;
-            decimal? standard = atribut.StandardnaVrednost;
-
-            // Izračun po standardu
-            if (standard.HasValue)
-            {
-                if (leva.HasValue)
-                    deficitiStandard.Add(CalcDeficit(standard.Value, leva.Value));
-                if (desna.HasValue)
-                    deficitiStandard.Add(CalcDeficit(standard.Value, desna.Value));
-            }
-
-            // Izračun po zdravi strani
-            if (leva.HasValue && desna.HasValue)
-            {
-                var referenca = Math.Max(leva.Value, desna.Value);
-                deficitiRelativno.Add(CalcDeficit(referenca, leva.Value));
-                deficitiRelativno.Add(CalcDeficit(referenca, desna.Value));
-            }
-        }
-
-        DeficitStandard = deficitiStandard.Any() ? deficitiStandard.Average() : null;
-        DeficitRelativno = deficitiRelativno.Any() ? deficitiRelativno.Average() : null;
-
-        OcenaPotrjena = true;
     }
 
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("OcenjevalniAtribut.razor->OnInitializedAsync");
+        var json = JsonSerializer.Serialize(Atributi, new JsonSerializerOptions { WriteIndented = true});
+
+        foreach (Atribut atr in Atributi)
+        {
+            atr.Ocena = new();    
+        }
+        Logger.LogInformation("OcenjevalniAtribut.RAZOR->OnInitializedAsync {json}", json);
     }
 
-    private decimal CalcDeficit(decimal standard, decimal dejanska)
+    private decimal CalcDeficit(decimal dejanska, decimal referenca)
     {
-        if (standard == 0) return 0;
-        var razlika = Math.Abs(standard - dejanska);
-        return (razlika / standard) * 100;
+        if (referenca == 0) return 0;
+        var razlika = Math.Abs(referenca - dejanska);
+        return Math.Round((razlika / referenca) * 100, 2);
     }
+
+
 }

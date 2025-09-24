@@ -49,8 +49,8 @@ public class SegmentService
                                 AtributId = dr["ID"].ToString(),
                                 Opis= dr["OPIS"].ToString(),
                                 SegmentId = dr["SEGMENT_ID"].ToString(),
-                                StandardnaVrednost = dr["STANDARD"]?.ToDecimal(),
-                                TipMeritve = dr["TIP_MERITVE"].ToString(),
+                                StandardnaVrednost = dr["STANDARD"]?.AsDecimal(),
+                                TipMeritve = dr["TIP_MERITVE"].ToString() == "NUM" ? TipMeritveEnum.NUM : TipMeritveEnum.BOOL,
                                 Enota =dr["ENOTA"].ToString(),
                             };
                             segment.Atributi.Add(atr);
@@ -69,10 +69,10 @@ public class SegmentService
 
         using var conn = new OracleConnection(_config.GetConnectionString("APL_INVALIDNOST"));
         conn.Open();
-        string q="";
+        string q = "";
         q += "SELECT seg.ID AS SEGMENT_ID, seg.OPIS, seg.NADREJENI_ID, seg.TIP, seg.LDE,";
-q += " (select count(atr.ID) from b1_atributi atr   where atr.segment_id = seg.ID    ) as st_kriterijev";
-q += " FROM B1_SEGMENTI seg";
+        q += " (select count(atr.ID) from b1_atributi atr   where atr.segment_id = seg.ID    ) as st_kriterijev";
+        q += " FROM B1_SEGMENTI seg";
 
 
         using (OracleCommand cmd = new OracleCommand(q, conn))
@@ -90,10 +90,10 @@ q += " FROM B1_SEGMENTI seg";
                     Opis = dr["OPIS"].ToString(),
                     NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
                     //Tip = reader.GetString(3),
-                    Stranskost = dr["LDE"].ToString(),
+                    SimetrijaDelaTelesa = dr["LDE"].ToString()== "LD" ? SimetrijaDelaTelesa.LD : SimetrijaDelaTelesa.E,
                     Atributi = new List<Atribut>(),
                     PodSegment = new List<Segment>(),
-                    ImaOcenjevalneAtribute= dr["st_kriterijev"].ToString()!="0",
+                    ImaOcenjevalneAtribute = dr["st_kriterijev"].ToString() != "0",
                 });
             }
         }
@@ -169,13 +169,7 @@ q += " FROM B1_SEGMENTI seg";
     }
 
 
-    public List<Segment> GetSegmentsByStranskost(string stranskost)
-    {
-        return Seznam
-            .Where(s => s.Stranskost.Equals(stranskost, StringComparison.OrdinalIgnoreCase)
-                     || s.Stranskost.Equals("oboje", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
+
 
 
 }

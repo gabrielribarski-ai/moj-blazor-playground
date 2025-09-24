@@ -71,7 +71,7 @@ ORDER BY pa.SEGMENT_ID, pa.ID, pas.ZAP_ST";
                         Opis = dr["ATRIBUT_OPIS"].ToString(),
                         SegmentId = dr["Segment_Id"].ToString(),
                         StandardnaVrednost = dr["Standard"] as decimal?,
-                        TipMeritve = dr["Tip_Meritve"].ToString()!,
+                        TipMeritve = dr["TIP_MERITVE"].ToString() == "NUM" ? TipMeritveEnum.NUM : TipMeritveEnum.BOOL,
                         Enota = dr["Enota"].ToString()!
                     };
                     lookup[aid] = atr;
@@ -87,7 +87,7 @@ ORDER BY pa.SEGMENT_ID, pa.ID, pas.ZAP_ST";
                         Operator = dr["Obmocje_Operator_1"].ToString()!,
                         ObmocjeNum = Convert.ToDecimal(dr["Obmocje_Num"]),
                         //MaxProcent = Convert.ToDecimal(dr["MaxProcent"]),
-                        Stopnja = dr["STOPNJA_NUM"].ToString()!
+                        StopnjaOpis = dr["STOPNJA_NUM"].ToString()!
                     };
                     // privzeto predvidevamo, da si v Atributu dodal List<StopnjaDeficita> Stopnje { get; set; }
                     atr.Stopnje.Add(stopnja);

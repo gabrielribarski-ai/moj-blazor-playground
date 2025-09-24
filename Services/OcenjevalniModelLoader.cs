@@ -1,4 +1,5 @@
-﻿using CustomTypeExtensions;
+﻿//file: OcenjevalniModelLoader.cs
+using CustomTypeExtensions;
 using IzracunInvalidnostiBlazor.Models;  // Atribut, StopnjaDeficita
 using Microsoft.Extensions.Configuration;
 using Oracle.ManagedDataAccess.Client;
@@ -10,7 +11,9 @@ namespace IzracunInvalidnostiBlazor.Services
     {
         private readonly IConfiguration _config;
 
+
         private readonly string connStr;
+        public bool IsPogojiSeznamLoaded { get; private set; }
 
         public OcenjevalniModel OcenjevalniModel { get; set; }
 
@@ -31,29 +34,28 @@ namespace IzracunInvalidnostiBlazor.Services
 
         public async Task LoadPogojSeznamFromDB()
         {
+            if (IsPogojiSeznamLoaded) return; // 👈 prepreči dvojni query
             OcenjevalniModel.PogojSeznam = new List<Pogoj>();
-            using (var conn = new OracleConnection(connStr))
+
+            using (var conn = new OracleConnection(this.connStr))
             {
-                conn.Open();
+                await conn.OpenAsync();
+                const string sql = "SELECT ID, SIFRA, OPIS FROM B1_POGOJI";
+                await using var cmd = new OracleCommand(sql, conn);
+                await using var reader = await cmd.ExecuteReaderAsync();
 
-                using var cmd = new OracleCommand("SELECT ID, SIFRA, OPIS FROM B1_POGOJI", conn);
-                using var reader = cmd.ExecuteReader();
-                var dt = new DataTable();
-                dt.Load(reader);
-
-                foreach (DataRow dr in dt.Rows)
+                while (await reader.ReadAsync())
                 {
                     OcenjevalniModel.PogojSeznam.Add(new Pogoj
                     {
-                        PogojId = dr[0].ToString(),
-                        Sifra = dr[1].ToString(),
-                        Opis = dr[2].ToString()
+                        PogojId = reader["ID"].ToString(),
+                        Sifra = reader["SIFRA"].ToString(),
+                        Opis = reader["OPIS"].ToString()
                     });
                 }
             }
+            IsPogojiSeznamLoaded = true; // 👈 označi kot naloženo
         }
-
-
 
 
         public async Task LoadSegmentSeznamFromDB()
@@ -62,8 +64,8 @@ namespace IzracunInvalidnostiBlazor.Services
             using (var conn = new OracleConnection(this.connStr))
             {
                 conn.Open();
-            string q = "";
-                q += "SELECT seg.ID AS SEGMENT_ID, seg.OPIS, seg.NADREJENI_ID, seg.TIP, seg.LDE,";
+                string q = "";
+                q += "SELECT seg.ID AS SEGMENT_ID, seg.OPIS, seg.NADREJENI_ID, seg.LDE,";
                 q += " (select count(atr.ID) from b1_atributi atr   where atr.segment_id = seg.ID    ) as st_kriterijev";
                 q += " FROM B1_SEGMENTI seg";
 
@@ -82,7 +84,7 @@ namespace IzracunInvalidnostiBlazor.Services
                             Opis = dr["OPIS"].ToString(),
                             NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
                             //Tip = reader.GetString(3),
-                            Stranskost = dr["LDE"].ToString(),
+                            SimetrijaDelaTelesa = dr["LDE"].ToString()=="LD" ? SimetrijaDelaTelesa.LD: SimetrijaDelaTelesa.E,
                             Atributi = new List<Atribut>(),
                             PodSegment = new List<Segment>(),
                             ImaOcenjevalneAtribute = dr["st_kriterijev"].ToString() != "0",
@@ -93,6 +95,74 @@ namespace IzracunInvalidnostiBlazor.Services
             await PreberiAtributeDB_Sync_Segmenti();
         }
 
+
+        public Atribut? FindAtributById(string atributId)
+        {
+            return this.OcenjevalniModel.SegmentSeznam
+                .Where(s => s.ImaOcenjevalneAtribute && s.Atributi != null)
+                .SelectMany(s => s.Atributi)
+                .FirstOrDefault(a => a.AtributId == atributId);
+        }
+
+
+        public async Task PreberiStopnjeDB_Sync(string pogojId)
+        {
+            using (var conn = new OracleConnection(connStr))
+            {
+                conn.Open();
+                string q = "select * from vw_b1_atr_stopnja where pogoj_id=:pogoj_id";
+
+                using (OracleCommand cmd = new OracleCommand(q, conn))
+                {
+                    cmd.Parameters.Add(new OracleParameter("pogoj_id", OracleDbType.Varchar2, pogojId, ParameterDirection.Input));
+
+                    DataTable dt = new DataTable();
+                    using (OracleDataReader reader = cmd.ExecuteReader())
+                    {
+                        dt.Load(reader, LoadOption.PreserveChanges);
+                    }
+
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        string atribut_id = dr["atribut_id"].ToString();
+                        var atr = FindAtributById(atribut_id);
+                        if (atr != null)
+                        {
+                            StopnjaDeficita stopnja = new();
+                            stopnja.PogojAtributId = dr["pogoj_atribut_id"].ToString();
+                            stopnja.ZapSt = dr["zap_st"].ToInt().Value;
+                            stopnja.OdstotekFR = dr["fiksni_odstotek"].ToString() == "N" ? OdstotekFR.R : OdstotekFR.F;
+                            stopnja.StopnjaOpis = dr["stopnja_opis"].ToString();
+                            stopnja.ObmocjeNum = dr["obmocje_num"].ToInt().Value;
+                            stopnja.StopnjaNum = dr["stopnja_num"].ToInt().Value;
+                            stopnja.TockaOpis = dr["tocka_opis"].ToString();
+                            stopnja.Operator = dr["operator_1"].ToString();
+                            stopnja.Operator = dr["operator_1"].ToString();
+                            atr.Stopnje.Add(stopnja);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        private async Task<List<T>> QueryAsync<T>(string sql, Func<OracleDataReader, T> map, params OracleParameter[] parameters)
+        {
+            var list = new List<T>();
+            await using var conn = new OracleConnection(connStr);
+            await conn.OpenAsync();
+
+            await using var cmd = new OracleCommand(sql, conn);
+            if (parameters?.Length > 0)
+                cmd.Parameters.AddRange(parameters);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(map(reader));
+            }
+            return list;
+        }
 
         public async Task PreberiAtributeDB_Sync_Segmenti()
         {
@@ -120,12 +190,14 @@ namespace IzracunInvalidnostiBlazor.Services
                                 Atribut atr = new Atribut()
                                 {
                                     AtributId = dr["ID"].ToString(),
+         
                                     Opis = dr["OPIS"].ToString(),
                                     SegmentId = dr["SEGMENT_ID"].ToString(),
-                                    StandardnaVrednost = dr["STANDARD"]?.ToDecimal(),
-                                    TipMeritve = dr["TIP_MERITVE"].ToString(),
+                                    StandardnaVrednost = dr["STANDARD"]?.AsDecimal(),
+                                    TipMeritve = dr["TIP_MERITVE"].ToString()=="NUM"?TipMeritveEnum.NUM: TipMeritveEnum.BOOL,
                                     Enota = dr["ENOTA"].ToString(),
                                 };
+                                await PreberiStopnjeDB_Sync(atr.AtributId);
                                 segment.Atributi.Add(atr);
                             }
                         }
@@ -134,17 +206,7 @@ namespace IzracunInvalidnostiBlazor.Services
             }
 
         }
-        /*
 
-        public  List<Segment> SegmentiZaPrikaz()
-        {
-           var s=
-              SegmentSeznam
-                ?.Where(s => s.NadsegmentId == trenutniSegment?.SegmentId)
-                .ToList();
-            return s;
-        }
-        */
 
 
 

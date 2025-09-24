@@ -6,6 +6,7 @@ namespace IzracunInvalidnostiBlazor.Models
     public class OcenjevalniModel
     {
         public List<Pogoj> PogojSeznam { get;  set; }
+
         public  Pogoj IzbranPogoj{ get; set; }
         public List<Segment> SegmentSeznam { get; set; }
 
@@ -123,13 +124,6 @@ namespace IzracunInvalidnostiBlazor.Models
         }
 
 
-        public List<Segment> GetSegmentsByStranskost(string stranskost)
-        {
-            return SegmentSeznam
-                .Where(s => s.Stranskost.Equals(stranskost, StringComparison.OrdinalIgnoreCase)
-                         || s.Stranskost.Equals("oboje", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
 
 
     }
