@@ -133,7 +133,7 @@ namespace IzracunInvalidnostiBlazor.Services
                             stopnja.ZapSt = dr["zap_st"].ToInt().Value;
                             stopnja.OdstotekFR = dr["fiksni_odstotek"].ToString() == "N" ? OdstotekFR.R : OdstotekFR.F;
                             stopnja.StopnjaOpis = dr["stopnja_opis"].ToString();
-                            stopnja.ObmocjeNum = dr["obmocje_num"].ToInt().Value;
+                            stopnja.ObmocjeNum = dr["obmocje_num"].AsDecimal();
                             stopnja.StopnjaNum = dr["stopnja_num"].ToInt().Value;
                             stopnja.TockaOpis = dr["tocka_opis"].ToString();
                             stopnja.Operator = dr["operator_1"].ToString();

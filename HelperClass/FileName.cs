@@ -141,15 +141,29 @@ namespace CustomTypeExtensions
 
         public static decimal? AsDecimal(this object input, decimal? default_ = null)
         {
-            decimal? result = default_;
-            if (input != null && input is decimal)
-                result = (decimal)input;
-            else if (input != null && input is string)
-                result = decimal.Parse(input.ToString());
-            return result;
+            if (input == null)
+                return default_;
+
+            switch (input)
+            {
+                case decimal d:
+                    return d;
+                case float f: // System.Single
+                    return (decimal)f;
+                case double db:
+                    return (decimal)db;
+                case int i:
+                    return i;
+                case long l:
+                    return l;
+                case string s when decimal.TryParse(s, out var parsed):
+                    return parsed;
+                default:
+                    return default_;
+            }
         }
 
-        
+
         public static decimal AsDecimal(this decimal? value, decimal defaultValue = 0m)
         {
             return value ?? defaultValue;

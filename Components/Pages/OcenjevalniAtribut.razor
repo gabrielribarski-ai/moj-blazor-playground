@@ -1,12 +1,14 @@
 ﻿@*** filename: OcenjevalniAtribut.razor ****@
-@namespace IzracunInvalidnostiBlazor
-@using System.Text.Json
 @using CustomTypeExtensions
-@using static IzracunInvalidnostiBlazor.OcenjevalniAtribut
 @using IzracunInvalidnostiBlazor.Models
 @using Microsoft.Extensions.Logging
+@using Microsoft.Extensions.Options
+@using System.Text.Json
 @inject NavigationManager Nav
 @inject ILogger<Index> Logger
+
+@using Microsoft.AspNetCore.Mvc
+@inject IOptions<JsonOptions> JsonOptions
 
 <div class="segment-box listni">
     <h4>@Segment.Opis</h4>
@@ -92,25 +94,17 @@
 @code {
 
     [Parameter] public Segment Segment { get; set; } = default!;
-    [Parameter] public List<Atribut> Atributi { get; set; } = new();
 
     private bool OcenaPotrjena = false;
     private string IzbranaMetoda = "standard";
     private decimal? DeficitStandard;
     private decimal? DeficitRelativno;
 
-    public enum MoznaPrimerjava
-    {
-        L_primerjava_S, //LD
-        D_primerjava_S, //LD
-        L_primerjava_D, //LD
-        D_primerjava_L,//LD
-        E_primerjava_S //E
-    }
 
 
 
-    private MozniDeficit? MakeDeficit(MoznaPrimerjava tip, decimal dejanska, decimal referenca, StranLDE stranLDE)
+    //private MozniDeficit? MakeDeficit(MoznaPrimerjava tip, decimal dejanska, decimal referenca, StranLDE stranLDE)
+    private MozniDeficit? MakeDeficit(MoznaPrimerjavaEnum moznaPrimerjava, decimal dejanska, decimal referenca, StranLDE stranLDE)
     {
         if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E && stranLDE != StranLDE.E)
             return null;
@@ -119,17 +113,18 @@
             return null;
 
         var deficit = CalcDeficit(dejanska, referenca);
-
         // zberi vse stopnje iz atributov trenutnega segmenta
         var vseStopnje = Segment.Atributi.SelectMany(a => a.Stopnje).ToList();
 
-        return new MozniDeficit
+        MozniDeficit mozniDeficit= new MozniDeficit
         {
-            moznePrimerjave = tip,
+            MoznaPrimerjava = moznaPrimerjava,
             Deficit = deficit,
             StranLDE = stranLDE,
             IzracunaniOdstotek = IzracunajInvalidnost(deficit, vseStopnje)
         };
+        return mozniDeficit;
+        //Segment.MozniDeficitNabor.Add(mozniDeficit);
     }
 
 
@@ -138,33 +133,33 @@
     {
         Segment.IzmerjeniDeficit = new();
 
-
         var simetrija = Segment.SimetrijaDelaTelesa;  // enum, ki vrne LD ali E
         // seštej vse vrednosti v enem koraku
-        Segment.IzmerjeniDeficit.GibljivostSkupajL = Atributi.Sum(atr => atr.Ocena.VrednostL.AsDecimal());
-        Segment.IzmerjeniDeficit.GibljivostSkupajD = Atributi.Sum(atr => atr.Ocena.VrednostD.AsDecimal());
-        Segment.IzmerjeniDeficit.GibljivostSkupajE = Atributi.Sum(atr => atr.Ocena.VrednostE.AsDecimal());
-        Segment.IzmerjeniDeficit.StandardSkupaj = Atributi.Sum(atr => atr.StandardnaVrednost.AsDecimal());
+        Segment.IzmerjeniDeficit.GibljivostSkupajL = Segment.Atributi.Sum(atr => atr.Ocena.VrednostL.AsDecimal());
+        Segment.IzmerjeniDeficit.GibljivostSkupajD = Segment.Atributi.Sum(atr => atr.Ocena.VrednostD.AsDecimal());
+        Segment.IzmerjeniDeficit.GibljivostSkupajE = Segment.Atributi.Sum(atr => atr.Ocena.VrednostE.AsDecimal());
+        Segment.IzmerjeniDeficit.StandardSkupaj = Segment.Atributi.Sum(atr => atr.StandardnaVrednost.AsDecimal());
 
         List<MozniDeficit> deficiti = new List<MozniDeficit>();
 
         var kandidati = new[]
         {
-            MakeDeficit(MoznaPrimerjava.E_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajE, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.E),
-            MakeDeficit(MoznaPrimerjava.D_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.D),
-            MakeDeficit(MoznaPrimerjava.L_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.L),
-            MakeDeficit(MoznaPrimerjava.L_primerjava_D, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.GibljivostSkupajD, StranLDE.L),
-            MakeDeficit(MoznaPrimerjava.D_primerjava_L, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.GibljivostSkupajL, StranLDE.D)
+            MakeDeficit(MoznaPrimerjavaEnum.E_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajE, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.E),
+            MakeDeficit(MoznaPrimerjavaEnum.D_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.D),
+            MakeDeficit(MoznaPrimerjavaEnum.L_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.L),
+            MakeDeficit(MoznaPrimerjavaEnum.L_primerjava_D, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.GibljivostSkupajD, StranLDE.L),
+            MakeDeficit(MoznaPrimerjavaEnum.D_primerjava_L, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.GibljivostSkupajL, StranLDE.D)
         };
 
+        Segment.MozniDeficitNabor = Segment.MozniDeficitNabor ?? new List<MozniDeficit>();
         //Logger.LogInformation("L_primerjava_D" + " : " + deficiti.Last().Deficit);
-        deficiti.AddRange(kandidati.Where(d => d != null)!);
+        Segment.MozniDeficitNabor.AddRange(kandidati.Where(d => d != null)!);
 
         foreach (var d in deficiti)
         {
             Logger.LogInformation(
                 "Primerjava: {Primerjava}, Stran: {Stran}, Deficit: {Deficit}%",
-                d.moznePrimerjave,
+                d.MoznaPrimerjava,
                 d.StranLDE,
                 d.Deficit?.ToString("0.00")
             );
@@ -181,13 +176,13 @@
 
     private void log_segment()
     {
-        var json = JsonSerializer.Serialize(Segment, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(Segment, JsonOptions.Value.JsonSerializerOptions);
         Logger.LogInformation("OcenjevalniAtribut.razor->Segment {json}", json);
     }
 
     protected override async Task OnInitializedAsync()
     {
-        foreach (Atribut atr in Atributi)
+        foreach (Atribut atr in Segment.Atributi)
         {
             atr.Ocena = new();    
         }
@@ -200,45 +195,106 @@
         return Math.Round((razlika / referenca) * 100, 2);
     }
 
-
-    private decimal? IzracunajInvalidnost(decimal deficit, List<StopnjaDeficita> stopnje)
+    /*
+    private decimal? IzracunajInvalidnost(decimal deficitPercent, List<StopnjaDeficita> stopnje)
     {
-        if (stopnje == null || stopnje.Count == 0)
-            return null;
+        if (stopnje == null || stopnje.Count == 0) return null;
 
-        var ordered = stopnje.OrderBy(s => s.ZapSt).ToList();
+        // Pretvori deficit v koeficient 0–1
+        var deficitCoef = deficitPercent / 100m;
 
-        for (int i = 0; i < ordered.Count; i++)
+        var points = stopnje.OrderBy(s => s.ObmocjeNum).ToList();
+
+        // 1) Pod spodnjo mejo
+        var first = points.First();
+        if (deficitCoef <= first.ObmocjeNum)
+            return first.StopnjaNum;
+
+        // 2) Vmes med točkami
+        for (int i = 0; i < points.Count - 1; i++)
         {
-            var s = ordered[i];
+            var cur = points[i];
+            var next = points[i + 1];
 
-            // Fiksna stopnja
-            if (s.OdstotekFR == OdstotekFR.F && deficit <= s.ObmocjeNum)
+            if (deficitCoef > cur.ObmocjeNum && deficitCoef <= next.ObmocjeNum)
             {
-                return s.StopnjaNum;
-            }
+                if (cur.OdstotekFR == OdstotekFR.F)
+                {
+                    return cur.StopnjaNum;
+                }
 
-            // Relativna stopnja
-            if (s.OdstotekFR == OdstotekFR.R && i < ordered.Count - 1)
-            {
-                var next = ordered[i + 1];
-
-                if (deficit > s.ObmocjeNum && deficit <= next.ObmocjeNum)
+                if (cur.OdstotekFR == OdstotekFR.R)
                 {
                     // linearna interpolacija med StopnjaNum vrednostmi
-                    var range = next.ObmocjeNum - s.ObmocjeNum;
-                    var pos = (deficit - s.ObmocjeNum) / range;
+                    var span = next.ObmocjeNum - cur.ObmocjeNum;
+                    if (span <= 0) return next.StopnjaNum;
 
-                    var valueRange = next.StopnjaNum - s.StopnjaNum;
-                    return s.StopnjaNum + pos * valueRange;
+                    var t = (deficitCoef - cur.ObmocjeNum) / span;
+                    var valueSpan = next.StopnjaNum - cur.StopnjaNum;
+                    return Math.Round(cur.StopnjaNum + t * valueSpan, 2);
                 }
             }
         }
 
-        // če preseže vse stopnje, vrni max
-        return ordered.Last().StopnjaNum;
+        // 3) Nad zadnjo mejo
+        return points.Last().StopnjaNum;
     }
+    */
 
+    private decimal? IzracunajInvalidnost(decimal deficitPercent, List<StopnjaDeficita> stopnje)
+    {
+        if (stopnje == null || stopnje.Count == 0)
+            return null;
+
+        // 1) pripravimo vrednost med 0 in 1
+        var coef = deficitPercent / 100m;
+
+        // 2) relativne stopnje (R) z ObmocjeNum in interpolacija
+        var relativne = stopnje
+            .Where(s => s.OdstotekFR == OdstotekFR.R && s.ObmocjeNum.HasValue)
+            .OrderBy(s => s.ObmocjeNum.Value)
+            .ToArray();
+
+        if (relativne.Length > 0)
+        {
+            // če smo pod prvo mejo, vrnemo prvo StopnjaNum
+            if (coef <= relativne[0].ObmocjeNum)
+                return relativne[0].StopnjaNum;
+
+            // poiščemo naslednji “point” nad našim coëfom
+            var nextIndex = Array.FindIndex(relativne, s => coef <= s.ObmocjeNum);
+            if (nextIndex >= 0)
+            {
+                var prev = relativne[nextIndex - 1];
+                var next = relativne[nextIndex];
+                var span = next.ObmocjeNum.Value - prev.ObmocjeNum.Value;
+                var t = (coef - prev.ObmocjeNum.Value) / span;
+                return t < 0 || span == 0
+                    ? next.StopnjaNum
+                    : Math.Round(prev.StopnjaNum + t * (next.StopnjaNum - prev.StopnjaNum), 2);
+            }
+
+            // nad zadnjo mejo
+            return relativne[^1].StopnjaNum;
+        }
+
+        // 3) fiksne stopnje (F): razdelimo 0–1 na n delov in izračunamo indeks
+        var fiksne = stopnje
+            .Where(s => s.OdstotekFR == OdstotekFR.F)
+            .OrderBy(s => s.ZapSt)
+            .Select(s => s.StopnjaNum)
+            .ToArray();
+
+        if (fiksne.Length == 0)
+            return null;
+
+        if (coef <= 0)
+            return 0;
+
+        // indeks = floor(coef * n), a ne preseže n-1
+        var idx = Math.Min((int)(coef * fiksne.Length), fiksne.Length - 1);
+        return fiksne[idx];
+    }
 
 
 }

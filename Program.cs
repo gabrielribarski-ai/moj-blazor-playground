@@ -1,9 +1,11 @@
+/* file: Program.cs */
 
-    using IzracunInvalidnostiBlazor;
-    using IzracunInvalidnostiBlazor.Components;
+using IzracunInvalidnostiBlazor.Components;
 using IzracunInvalidnostiBlazor.Services;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-    var builder = WebApplication.CreateBuilder(args);
+using System.Text.Encodings.Web;
+using System.Text.Json.Serialization;
+
+var builder = WebApplication.CreateBuilder(args);
     // Add services to the container. 
     builder.Services.AddRazorComponents()
         .AddInteractiveServerComponents();
@@ -12,6 +14,13 @@ builder.Services.AddSignalR(hubOptions =>
     hubOptions.MaximumReceiveMessageSize = 1 * 1024 * 1024; // 1MB
 });
 
+
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.WriteIndented = true;
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.JsonSerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+});
 /*
 if (builder.Environment.IsDevelopment())
     {

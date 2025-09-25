@@ -40,14 +40,12 @@ else
     
     @if (ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
     {
-        <OcenjevalniAtribut Segment="ocenjevalniModel?.trenutniSegment"
-                            Atributi="ocenjevalniModel.AtributiZaPrikaz"
-                            @key="ocenjevalniModel?.trenutniSegment?.SegmentId" />
+        <OcenjevalniAtribut Segment="ocenjevalniModel?.trenutniSegment" @key="ocenjevalniModel?.trenutniSegment?.SegmentId" />
     }
     
     @foreach (var podsegment in ocenjevalniModel?.SegmentiZaPrikaz)
     {
-        <DelTelesa Segment="podsegment"  OnNavigate="NavigirajNaSegment"  @key="podsegment.SegmentId" />
+        <DelTelesa Segment="podsegment"  OnNavigate="NavigirajNaSegment" @key="podsegment.SegmentId" />
     }
     
 }
