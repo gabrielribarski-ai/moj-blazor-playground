@@ -74,20 +74,26 @@
         <button class="btn btn-success mt-3" @onclick="PotrdiOceno">Potrdi oceno</button>
     }
     else
-    {
-        <div class="izbira-metode-box mt-3">
-            <label>Izberi metodo ocenjevanja:</label>
-            <select @bind="IzbranaMetoda" class="form-select">
-                <option value="standard">Glede na standard</option>
-                <option value="zdraviUd">Glede na zdravi ud</option>
-            </select>
-
-            <p class="mt-2">
-                <strong>Deficiti:</strong><br />
-                - Standard: @DeficitStandard?.ToString("0.0")%<br />
-                - Zdravi ud: @DeficitRelativno?.ToString("0.0")%
-            </p>
+        {
+        <div class="mt-3">
+            <h5>Možni izračuni</h5>
+            <div>
+                <strong>L stran:</strong>
+                @foreach (var d in MozniDeficiti.Where(x => x.StranLDE == StranLDE.L))
+                {
+                    <div>Deficit @d.MoznaPrimerjava: @d.Deficit% → @d.IzracunaniOdstotek%</div>
+                }
         </div>
+        <div>
+            <strong>D stran:</strong>
+            @foreach (var d in MozniDeficiti.Where(x => x.StranLDE == StranLDE.D))
+            {
+                <div>Deficit @d.MoznaPrimerjava: @d.Deficit% → @d.IzracunaniOdstotek%</div>
+            }
+        </div>
+
+        <button class="btn btn-primary mt-3" @onclick="ZakljuciSegment">Zaključi segment</button>
+    </div>
     }
 </div>
 
@@ -100,6 +106,20 @@
     private decimal? DeficitStandard;
     private decimal? DeficitRelativno;
 
+    private List<MozniDeficit> MozniDeficiti = new();
+
+    private void PredogledIzracuna()
+    {
+        IzracunajDeficit();
+        MozniDeficiti = Segment.MozniDeficitNabor ?? new();
+        OcenaPotrjena = true; // pomeni, da smo v fazi predogleda
+    }
+
+    private void ZakljuciSegment()
+    {
+        // zdaj šele sporoči navzgor
+        OnOcenaPotrjena.InvokeAsync(Segment);
+    }
 
     private void PotrdiOceno()
     {
