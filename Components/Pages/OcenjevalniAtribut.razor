@@ -94,14 +94,22 @@
 @code {
 
     [Parameter] public Segment Segment { get; set; } = default!;
-
+    [Parameter] public EventCallback<Segment> OnOcenaPotrjena { get; set; }
     private bool OcenaPotrjena = false;
     private string IzbranaMetoda = "standard";
     private decimal? DeficitStandard;
     private decimal? DeficitRelativno;
 
 
+    private void PotrdiOceno()
+    {
+        IzracunajDeficit();
+        log_segment();
+        OcenaPotrjena = true;
 
+        // sporoči navzgor
+        OnOcenaPotrjena.InvokeAsync(Segment);
+    }
 
     //private MozniDeficit? MakeDeficit(MoznaPrimerjava tip, decimal dejanska, decimal referenca, StranLDE stranLDE)
     private MozniDeficit? MakeDeficit(MoznaPrimerjavaEnum moznaPrimerjava, decimal dejanska, decimal referenca, StranLDE stranLDE)
@@ -113,6 +121,8 @@
             return null;
 
         var deficit = CalcDeficit(dejanska, referenca);
+        if (deficit>=100)
+            return null;
         // zberi vse stopnje iz atributov trenutnega segmenta
         var vseStopnje = Segment.Atributi.SelectMany(a => a.Stopnje).ToList();
 
@@ -167,13 +177,6 @@
     }
 
 
-    private void PotrdiOceno()
-    {
-        IzracunajDeficit();
-        log_segment();
-
-    }
-
     private void log_segment()
     {
         var json = JsonSerializer.Serialize(Segment, JsonOptions.Value.JsonSerializerOptions);
@@ -194,52 +197,6 @@
         var razlika = Math.Abs(referenca - dejanska);
         return Math.Round((razlika / referenca) * 100, 2);
     }
-
-    /*
-    private decimal? IzracunajInvalidnost(decimal deficitPercent, List<StopnjaDeficita> stopnje)
-    {
-        if (stopnje == null || stopnje.Count == 0) return null;
-
-        // Pretvori deficit v koeficient 0–1
-        var deficitCoef = deficitPercent / 100m;
-
-        var points = stopnje.OrderBy(s => s.ObmocjeNum).ToList();
-
-        // 1) Pod spodnjo mejo
-        var first = points.First();
-        if (deficitCoef <= first.ObmocjeNum)
-            return first.StopnjaNum;
-
-        // 2) Vmes med točkami
-        for (int i = 0; i < points.Count - 1; i++)
-        {
-            var cur = points[i];
-            var next = points[i + 1];
-
-            if (deficitCoef > cur.ObmocjeNum && deficitCoef <= next.ObmocjeNum)
-            {
-                if (cur.OdstotekFR == OdstotekFR.F)
-                {
-                    return cur.StopnjaNum;
-                }
-
-                if (cur.OdstotekFR == OdstotekFR.R)
-                {
-                    // linearna interpolacija med StopnjaNum vrednostmi
-                    var span = next.ObmocjeNum - cur.ObmocjeNum;
-                    if (span <= 0) return next.StopnjaNum;
-
-                    var t = (deficitCoef - cur.ObmocjeNum) / span;
-                    var valueSpan = next.StopnjaNum - cur.StopnjaNum;
-                    return Math.Round(cur.StopnjaNum + t * valueSpan, 2);
-                }
-            }
-        }
-
-        // 3) Nad zadnjo mejo
-        return points.Last().StopnjaNum;
-    }
-    */
 
     private decimal? IzracunajInvalidnost(decimal deficitPercent, List<StopnjaDeficita> stopnje)
     {
