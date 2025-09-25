@@ -37,5 +37,16 @@ public class Segment
 
      public bool OcenaPotrjena { get; set; }
 
+    public MozniDeficit FindMozniDeficit(StranLDE stran, decimal odstotek)
+    {
+        return MozniDeficitNabor.Where(x => x.IzracunaniOdstotek == odstotek).FirstOrDefault();
+    }
+    public void ClearIzberiMozniDeficit()
+    {
+     foreach(var def in MozniDeficitNabor)
+        {
+            def.JeIzbran = false;
+        }
 
+    }
 }

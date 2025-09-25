@@ -95,31 +95,137 @@
         <button class="btn btn-primary mt-3" @onclick="ZakljuciSegment">Zaključi segment</button>
     </div>
     }
+    @if (!FazaPredogleda)
+    {
+        <button class="btn btn-success mt-3" @onclick="PredogledIzracuna">
+            Izračunaj možnosti
+        </button>
+    }
+    else
+    {
+        <div class="mt-3 p-3 border rounded">
+            <h5>Izberi izračunane stopnje invalidnosti</h5>
+
+            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
+            {
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">L stran</label>
+                        <select class="form-select" @bind="SelectedLPercent">
+                            <option value="">— izberi —</option>
+                            @foreach (var v in OpcijeL)
+                            {
+                                <option value="@v">@v.ToString("0.00")%</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">D stran</label>
+                        <select class="form-select" @bind="SelectedDPercent">
+                            <option value="">— izberi —</option>
+                            @foreach (var v in OpcijeD)
+                            {
+                                <option value="@v">@v.ToString("0.00")%</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
+            else if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+            {
+                <label class="form-label">E stran</label>
+                <select class="form-select" @bind="SelectedLPercent">
+                    <option value="">— izberi —</option>
+                    @foreach (var v in OpcijeL)  // ali OpcijeD, odvisno od tvoje domene
+                    {
+                        <option value="@v">@v.ToString("0.00")%</option>
+                    }
+                </select>
+            }
+
+            <div class="mt-3">
+                <button class="btn btn-primary" disabled="@(LahkoZakljuci() ? null : true)" @onclick="ZakljuciSegment">
+                    Zaključi segment
+                </button>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
 
     [Parameter] public Segment Segment { get; set; } = default!;
     [Parameter] public EventCallback<Segment> OnOcenaPotrjena { get; set; }
-    private bool OcenaPotrjena = false;
-    private string IzbranaMetoda = "standard";
-    private decimal? DeficitStandard;
-    private decimal? DeficitRelativno;
 
+    private bool FazaPredogleda = false;
+    private bool OcenaPotrjena = false;
     private List<MozniDeficit> MozniDeficiti = new();
+    private List<decimal> OpcijeL = new(); // možni odstotki za L
+    private List<decimal> OpcijeD = new(); // možni odstotki za D
+
+    private decimal? SelectedLPercent;
+    private decimal? SelectedDPercent;
 
     private void PredogledIzracuna()
     {
         IzracunajDeficit();
+
         MozniDeficiti = Segment.MozniDeficitNabor ?? new();
-        OcenaPotrjena = true; // pomeni, da smo v fazi predogleda
+
+        OpcijeL = MozniDeficiti
+            .Where(x => x.StranLDE == StranLDE.L && x.IzracunaniOdstotek.HasValue)
+            .Select(x => x.IzracunaniOdstotek!.Value)
+            .Distinct()
+            .OrderBy(v => v)
+            .Take(2)
+            .ToList();
+
+        OpcijeD = MozniDeficiti
+            .Where(x => x.StranLDE == StranLDE.D && x.IzracunaniOdstotek.HasValue)
+            .Select(x => x.IzracunaniOdstotek!.Value)
+            .Distinct()
+            .OrderBy(v => v)
+            .Take(2)
+            .ToList();
+
+        // reset izbir
+        SelectedLPercent = null;
+        SelectedDPercent = null;
+
+        FazaPredogleda = true;
     }
 
-    private void ZakljuciSegment()
+    private bool LahkoZakljuci()
     {
-        // zdaj šele sporoči navzgor
-        OnOcenaPotrjena.InvokeAsync(Segment);
+        return Segment.SimetrijaDelaTelesa switch
+        {
+            // če je segment dvostranski (leva in desna stran),
+            // zahtevaj vsaj eno izbiro
+            SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue || SelectedDPercent.HasValue,
+
+            // če je enostranski (E), zadostuje katerakoli izbira
+            SimetrijaDelaTelesa.E => SelectedLPercent.HasValue || SelectedDPercent.HasValue,
+
+            // fallback
+            _ => false
+        };
     }
+
+
+
+    private async Task ZakljuciSegment()
+    {
+        Segment.ClearIzberiMozniDeficit();
+        // Zapiši izbor v segment (predlagam dodati polji; če ju že imaš, prilagodi imena)
+        var L = Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value);
+        var D = Segment.FindMozniDeficit(StranLDE.D, SelectedLPercent.Value);
+        L.JeIzbran = true;
+        D.JeIzbran = true;
+        await OnOcenaPotrjena.InvokeAsync(Segment);
+        FazaPredogleda = false;
+    }
+
+
 
     private void PotrdiOceno()
     {

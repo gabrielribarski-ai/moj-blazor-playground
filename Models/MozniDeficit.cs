@@ -8,5 +8,6 @@ namespace IzracunInvalidnostiBlazor.Models
         public decimal? Deficit { get; set; }
         public decimal? IzracunaniOdstotek { get; set; }
         public StranLDE StranLDE { get; set; }
+        public bool JeIzbran { get; set; } = false;
     }
 }
