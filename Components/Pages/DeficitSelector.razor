@@ -6,9 +6,7 @@
 {
     <!-- Enostranski segment -->
     <label for="selectE">Izberi deficit:</label>
-    <select id="selectE" class="form-select"
-            @bind-Value="SelectedEPercent"
-            @bind-Value:event="onchange">
+    <select id="selectE" class="form-select" @onchange="OnEChanged">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeE)
         {
@@ -22,9 +20,7 @@ else
 {
     <!-- Dvostranski segment -->
     <label for="selectL"><b>Leva stran</b></label>
-    <select id="selectL" class="form-select"
-            @bind-Value="SelectedLPercent"
-            @bind-Value:event="onchange">
+    <select id="selectL" class="form-select" @onchange="OnLChanged">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeL)
         {
@@ -35,9 +31,7 @@ else
     </select>
 
     <label for="selectD" class="mt-2"><b>Desna stran</b></label>
-    <select id="selectD" class="form-select"
-            @bind-Value="SelectedDPercent"
-            @bind-Value:event="onchange">
+    <select id="selectD" class="form-select" @onchange="OnDChanged">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeD)
         {
@@ -59,4 +53,34 @@ else
 
     [Parameter] public decimal? SelectedEPercent { get; set; }
     [Parameter] public EventCallback<decimal?> SelectedEPercentChanged { get; set; }
+
+    private async Task OnLChanged(ChangeEventArgs e)
+    {
+        var val = ParseDecimalNullable(e.Value);
+        SelectedLPercent = val; // keep local in sync
+        await SelectedLPercentChanged.InvokeAsync(val);
+    }
+
+    private async Task OnDChanged(ChangeEventArgs e)
+    {
+        var val = ParseDecimalNullable(e.Value);
+        SelectedDPercent = val;
+        await SelectedDPercentChanged.InvokeAsync(val);
+    }
+
+    private async Task OnEChanged(ChangeEventArgs e)
+    {
+        var val = ParseDecimalNullable(e.Value);
+        SelectedEPercent = val;
+        await SelectedEPercentChanged.InvokeAsync(val);
+    }
+
+    private static decimal? ParseDecimalNullable(object? raw)
+    {
+        var s = raw?.ToString();
+        if (string.IsNullOrWhiteSpace(s)) return null;
+        return decimal.TryParse(s, System.Globalization.NumberStyles.Any,
+                 System.Globalization.CultureInfo.InvariantCulture, out var d)
+               ? d : null;
+    }
 }

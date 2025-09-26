@@ -31,11 +31,11 @@
     {
         <DeficitSelector Segment="Segment"
                          SelectedLPercent="@SelectedLPercent"
-                         SelectedLPercentChanged="@((decimal? val) => SelectedLPercent = val)"
+                         SelectedLPercentChanged="@((decimal? v) => SelectedLPercent = v)"
                          SelectedDPercent="@SelectedDPercent"
-                         SelectedDPercentChanged="@((decimal? val) => SelectedDPercent = val)"
+                         SelectedDPercentChanged="@((decimal? v) => SelectedDPercent = v)"
                          SelectedEPercent="@SelectedEPercent"
-                         SelectedEPercentChanged="@((decimal? val) => SelectedEPercent = val)" />
+                         SelectedEPercentChanged="@((decimal? v) => SelectedEPercent = v)" />
 
         @if (LahkoPotrdi())
         {
