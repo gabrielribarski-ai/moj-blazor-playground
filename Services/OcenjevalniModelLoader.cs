@@ -65,9 +65,7 @@ namespace IzracunInvalidnostiBlazor.Services
             {
                 conn.Open();
                 string q = "";
-                q += "SELECT seg.ID AS SEGMENT_ID, seg.OPIS, seg.NADREJENI_ID, seg.LDE,";
-                q += " (select count(atr.ID) from b1_atributi atr   where atr.segment_id = seg.ID    ) as st_kriterijev";
-                q += " FROM B1_SEGMENTI seg";
+                q += "SELECT * FROM VW_B1_SEGMENT";
 
                 using (OracleCommand cmd = new OracleCommand(q, conn))
                 {
@@ -82,6 +80,7 @@ namespace IzracunInvalidnostiBlazor.Services
                         {
                             SegmentId = dr["SEGMENT_ID"].ToString(),
                             Opis = dr["OPIS"].ToString(),
+                            SegmentTreePath = dr["Segment_Tree_Path"].ToString(),
                             NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
                             //Tip = reader.GetString(3),
                             SimetrijaDelaTelesa = dr["LDE"].ToString()=="LD" ? SimetrijaDelaTelesa.LD: SimetrijaDelaTelesa.E,

@@ -58,7 +58,7 @@ else
                 {
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span>
-                            @seg.Opis –
+                            @seg.SegmentTreePath –
                             @(seg.MozniDeficitNabor?.Max(d => d.IzracunaniOdstotek) ?? 0) %
                         </span>
                         <button class="btn btn-sm btn-outline-primary"
@@ -116,6 +116,24 @@ else
         }
     }
 
+    private async Task DodajOcenjenSegment(Segment seg)
+    {
+        // če segment že obstaja, ga zamenjaj
+        var existing = OcenjeniSegmenti.FirstOrDefault(s => s.SegmentId == seg.SegmentId);
+        if (existing != null)
+            OcenjeniSegmenti.Remove(existing);
+
+        OcenjeniSegmenti.Add(seg);
+        IzracunajSkupnoInvalidnost();
+
+        // 🔹 resetiraj trenutni segment → vrni se na osnovni pregled
+
+        await ocenjevalniModel.TrenutniSegmentSet(ocenjevalniModel.GetRootSegment().SegmentId);
+        //TrenutniSegment = null;
+        //ocenjevalniModel.trenutniSegment = null;
+    }
+
+
     private async Task NavigirajNaSegment(Segment segment)
     {
         await ocenjevalniModel.TrenutniSegmentSet(segment.SegmentId);
@@ -128,16 +146,7 @@ else
         //StateHasChanged();
     }
 
-    private void DodajOcenjenSegment(Segment seg)
-    {
-        // če segment že obstaja, ga zamenjaj
-        var existing = OcenjeniSegmenti.FirstOrDefault(s => s.SegmentId == seg.SegmentId);
-        if (existing != null)
-            OcenjeniSegmenti.Remove(existing);
 
-        OcenjeniSegmenti.Add(seg);
-        IzracunajSkupnoInvalidnost();
-    }
 
     private void IzracunajSkupnoInvalidnost()
     {

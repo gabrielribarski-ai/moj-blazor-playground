@@ -16,7 +16,7 @@ public class Segment
 
     public string Opis { get; set; } = string.Empty;
 
-
+    public string SegmentTreePath { get; set; }
     // L/D/oboje – za stranskost telesa
     public SimetrijaDelaTelesa SimetrijaDelaTelesa { get; set; } 
 
@@ -41,6 +41,16 @@ public class Segment
     {
         return MozniDeficitNabor.Where(x => x.IzracunaniOdstotek == odstotek).FirstOrDefault();
     }
+
+    public void IzberiMozniDeficit(StranLDE stran, decimal odstotek)
+    {
+        var a= MozniDeficitNabor.Where(x => x.IzracunaniOdstotek == odstotek).FirstOrDefault();
+        if (a != null)
+        {
+            a.JeIzbran = true;
+        }
+    }
+
     public void ClearIzberiMozniDeficit()
     {
      foreach(var def in MozniDeficitNabor)
@@ -49,4 +59,23 @@ public class Segment
         }
 
     }
+
+    public IEnumerable<MozniDeficit> OpcijeL =>
+        MozniDeficitNabor?
+            .Where(x => x.StranLDE == StranLDE.L && x.IzracunaniOdstotek.HasValue)
+            .OrderBy(x => x.IzracunaniOdstotek)
+        ?? Enumerable.Empty<MozniDeficit>();
+
+    public IEnumerable<MozniDeficit> OpcijeD =>
+        MozniDeficitNabor?
+            .Where(x => x.StranLDE == StranLDE.D && x.IzracunaniOdstotek.HasValue)
+            .OrderBy(x => x.IzracunaniOdstotek)
+        ?? Enumerable.Empty<MozniDeficit>();
+
+    public IEnumerable<MozniDeficit> OpcijeE =>
+        MozniDeficitNabor?
+            .Where(x => x.StranLDE == StranLDE.E && x.IzracunaniOdstotek.HasValue)
+            .OrderBy(x => x.IzracunaniOdstotek)
+        ?? Enumerable.Empty<MozniDeficit>();
+
 }

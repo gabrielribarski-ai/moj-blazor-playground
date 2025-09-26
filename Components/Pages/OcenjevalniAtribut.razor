@@ -4,6 +4,7 @@
 @using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
 @using System.Text.Json
+@using System.ComponentModel;
 @inject NavigationManager Nav
 @inject ILogger<Index> Logger
 
@@ -21,80 +22,75 @@
             <table class="atribut-tabela">
                 <thead>
                     <tr>
-                        <th>E</th>
-                        <th>L</th>
+                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+                        {
+                            <th>E</th>
+                        }
+                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
+                        {
+                            <th>L</th>
+                        }
                         <th>S</th>
-                        <th>D</th>
+                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
+                        {
+                            <th>D</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>
-
-                            @if (atribut.TipMeritve == TipMeritveEnum.NUM)
-                            {
-                                <InputNumber @bind-Value="atribut.Ocena.VrednostE" class="form-control" />
+                  <tr>
+                    @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+                        {
+                            <td>
+                                @if (atribut.TipMeritve == TipMeritveEnum.NUM)
+                                {
+                                    <InputNumber @bind-Value="atribut.Ocena.VrednostE" class="form-control" />
+                                }
+                                else
+                                @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
+                                {
+                                    <InputCheckbox @bind-Value="atribut.Ocena.VrednostE_Bool" />
+                                }
+                            </td>
                             }
-                            else @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
-                            {
-                                <InputCheckbox @bind-Value="atribut.Ocena.VrednostE_Bool" />
-                            }
-                        </td>
+                     
+                            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
+                        {
                         <td>
-                            @if (atribut.TipMeritve == TipMeritveEnum.NUM)
+                            @if (atribut.TipMeritve == TipMeritveEnum.NUM )
                             {
                                 <InputNumber @bind-Value="atribut.Ocena.VrednostL" class="form-control" />
                             }
-                            else @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
+                            else
+                            @if (atribut.TipMeritve == TipMeritveEnum.BOOL )
                             {
                                 <InputCheckbox @bind-Value="atribut.Ocena.VrednostL_Bool" />
                             }
                         </td>
+                        }
                         <td>
                             @atribut.StandardnaVrednost
                         </td>
-                        <td>
-                            @if (atribut.TipMeritve == TipMeritveEnum.NUM)
-                            {
-                                <InputNumber @bind-Value="atribut.Ocena.VrednostD" class="form-control" />
-                            }
-                            else @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
-                            {
-                                <InputCheckbox @bind-Value="atribut.Ocena.VrednostD_Bool" />
-                            }
-                        </td>
+                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
+                        {
+                            <td>
+                                @if (atribut.TipMeritve == TipMeritveEnum.NUM)
+                                {
+                                    <InputNumber @bind-Value="atribut.Ocena.VrednostD" class="form-control" />
+                                }
+                                else
+                                @if (atribut.TipMeritve == TipMeritveEnum.BOOL )
+                                {
+                                    <InputCheckbox @bind-Value="atribut.Ocena.VrednostD_Bool" />
+                                }
+                            </td>
+                        }
                     </tr>
                 </tbody>
             </table>
         </div>
     }
 
-    @if (!OcenaPotrjena)
-    {
-        <button class="btn btn-success mt-3" @onclick="PotrdiOceno">Potrdi oceno</button>
-    }
-    else
-        {
-        <div class="mt-3">
-            <h5>Možni izračuni</h5>
-            <div>
-                <strong>L stran:</strong>
-                @foreach (var d in MozniDeficiti.Where(x => x.StranLDE == StranLDE.L))
-                {
-                    <div>Deficit @d.MoznaPrimerjava: @d.Deficit% → @d.IzracunaniOdstotek%</div>
-                }
-        </div>
-        <div>
-            <strong>D stran:</strong>
-            @foreach (var d in MozniDeficiti.Where(x => x.StranLDE == StranLDE.D))
-            {
-                <div>Deficit @d.MoznaPrimerjava: @d.Deficit% → @d.IzracunaniOdstotek%</div>
-            }
-        </div>
-
-        <button class="btn btn-primary mt-3" @onclick="ZakljuciSegment">Zaključi segment</button>
-    </div>
-    }
     @if (!FazaPredogleda)
     {
         <button class="btn btn-success mt-3" @onclick="PredogledIzracuna">
@@ -106,16 +102,18 @@
         <div class="mt-3 p-3 border rounded">
             <h5>Izberi izračunane stopnje invalidnosti</h5>
 
-            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
+            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD )
             {
                 <div class="row">
                     <div class="col-md-6">
                         <label class="form-label">L stran</label>
                         <select class="form-select" @bind="SelectedLPercent">
                             <option value="">— izberi —</option>
-                            @foreach (var v in OpcijeL)
+                            @foreach (var def in Segment.OpcijeL)
                             {
-                                <option value="@v">@v.ToString("0.00")%</option>
+                                <option value="@def.IzracunaniOdstotek">
+                                    @GetDescription(def.MoznaPrimerjava) : @def.IzracunaniOdstotek?.ToString("0.0") %
+                                </option>
                             }
                         </select>
                     </div>
@@ -123,9 +121,11 @@
                         <label class="form-label">D stran</label>
                         <select class="form-select" @bind="SelectedDPercent">
                             <option value="">— izberi —</option>
-                            @foreach (var v in OpcijeD)
+                            @foreach (var def in Segment.OpcijeD)
                             {
-                                <option value="@v">@v.ToString("0.00")%</option>
+                                <option value="@def.IzracunaniOdstotek">
+                                    @GetDescription(def.MoznaPrimerjava) : @def.IzracunaniOdstotek?.ToString("0.0") %
+                                </option>
                             }
                         </select>
                     </div>
@@ -136,20 +136,25 @@
                 <label class="form-label">E stran</label>
                 <select class="form-select" @bind="SelectedLPercent">
                     <option value="">— izberi —</option>
-                    @foreach (var v in OpcijeL)  // ali OpcijeD, odvisno od tvoje domene
+                    @foreach (var def in Segment.OpcijeE)
                     {
-                        <option value="@v">@v.ToString("0.00")%</option>
+                        <option value="@def.IzracunaniOdstotek">
+                            @GetDescription(def.MoznaPrimerjava) : @def.IzracunaniOdstotek?.ToString("0.0") %
+                        </option>
                     }
                 </select>
             }
 
             <div class="mt-3">
-                <button class="btn btn-primary" disabled="@(LahkoZakljuci() ? null : true)" @onclick="ZakljuciSegment">
+                <button class="btn btn-primary"
+                        disabled="@(LahkoZakljuci() ? null : true)"
+                        @onclick="ZakljuciSegment">
                     Zaključi segment
                 </button>
             </div>
         </div>
     }
+
 </div>
 
 @code {
@@ -158,10 +163,9 @@
     [Parameter] public EventCallback<Segment> OnOcenaPotrjena { get; set; }
 
     private bool FazaPredogleda = false;
-    private bool OcenaPotrjena = false;
     private List<MozniDeficit> MozniDeficiti = new();
-    private List<decimal> OpcijeL = new(); // možni odstotki za L
-    private List<decimal> OpcijeD = new(); // možni odstotki za D
+    private List<decimal> OpcijeL = new();
+    private List<decimal> OpcijeD = new();
 
     private decimal? SelectedLPercent;
     private decimal? SelectedDPercent;
@@ -188,51 +192,51 @@
             .Take(2)
             .ToList();
 
-        // reset izbir
         SelectedLPercent = null;
         SelectedDPercent = null;
-
         FazaPredogleda = true;
     }
+
 
     private bool LahkoZakljuci()
     {
         return Segment.SimetrijaDelaTelesa switch
         {
-            // če je segment dvostranski (leva in desna stran),
-            // zahtevaj vsaj eno izbiro
-            SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue || SelectedDPercent.HasValue,
-
-            // če je enostranski (E), zadostuje katerakoli izbira
+            SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue && SelectedDPercent.HasValue,
             SimetrijaDelaTelesa.E => SelectedLPercent.HasValue || SelectedDPercent.HasValue,
-
-            // fallback
             _ => false
         };
     }
 
-
+    private string GetDescription(Enum value)
+    {
+        var field = value.GetType().GetField(value.ToString());
+        var attr = (DescriptionAttribute?)Attribute.GetCustomAttribute(field!, typeof(DescriptionAttribute));
+        return attr?.Description ?? value.ToString();
+    }
 
     private async Task ZakljuciSegment()
     {
+        if (!LahkoZakljuci())
+            return;
+
         Segment.ClearIzberiMozniDeficit();
-        // Zapiši izbor v segment (predlagam dodati polji; če ju že imaš, prilagodi imena)
-        var L = Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value);
-        var D = Segment.FindMozniDeficit(StranLDE.D, SelectedLPercent.Value);
-        L.JeIzbran = true;
-        D.JeIzbran = true;
+
+        if (SelectedLPercent.HasValue)
+            Segment.IzberiMozniDeficit(StranLDE.L, SelectedLPercent.Value);
+
+        if (SelectedDPercent.HasValue)
+            Segment.IzberiMozniDeficit(StranLDE.D, SelectedDPercent.Value);
+
         await OnOcenaPotrjena.InvokeAsync(Segment);
         FazaPredogleda = false;
     }
-
 
 
     private void PotrdiOceno()
     {
         IzracunajDeficit();
         log_segment();
-        OcenaPotrjena = true;
-
         // sporoči navzgor
         OnOcenaPotrjena.InvokeAsync(Segment);
     }
@@ -247,12 +251,12 @@
             return null;
 
         var deficit = CalcDeficit(dejanska, referenca);
-        if (deficit>=100)
+        if (deficit >= 100)
             return null;
         // zberi vse stopnje iz atributov trenutnega segmenta
         var vseStopnje = Segment.Atributi.SelectMany(a => a.Stopnje).ToList();
 
-        MozniDeficit mozniDeficit= new MozniDeficit
+        MozniDeficit mozniDeficit = new MozniDeficit
         {
             MoznaPrimerjava = moznaPrimerjava,
             Deficit = deficit,
@@ -313,7 +317,7 @@
     {
         foreach (Atribut atr in Segment.Atributi)
         {
-            atr.Ocena = new();    
+            atr.Ocena = new();
         }
     }
 

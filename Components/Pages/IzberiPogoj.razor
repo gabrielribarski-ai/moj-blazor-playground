@@ -39,11 +39,6 @@ else
     {
         await ocenjevalniModelLoader.LoadPogojSeznamFromDB();
         ocenjevalniModel = ocenjevalniModelLoader.OcenjevalniModel;
-        //await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
-        // ocenjevalniModelLoader del = await _model.ReadFromSessionStorage(SessionStorage);
-
-        // ocenjevalniModel = ocenjevalniModelLoader.OcenjevalniModel;
-        // StateHasChanged();
     }
 
     private async Task OnPogojChanged(ChangeEventArgs e)
