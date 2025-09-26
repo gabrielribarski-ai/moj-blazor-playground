@@ -5,15 +5,14 @@ namespace IzracunInvalidnostiBlazor
 {
     public class AtributOcena
     {
-        public decimal? VrednostL { get; set; }
-        public decimal? VrednostD { get; set; }
+        public decimal? VrednostL { get; set; }= 0;
+        public decimal? VrednostD { get; set; } = 0;
 
-        public decimal? VrednostE { get; set; }
+        public decimal? VrednostE { get; set; } = 0;
 
-        public bool VrednostL_Bool { get; set; }
-        public bool VrednostD_Bool { get; set; }
+        public bool VrednostL_Bool { get; set; } = false;
+        public bool VrednostD_Bool { get; set; } = false;
 
-        public bool VrednostE_Bool { get; set; }
-
+        public bool VrednostE_Bool { get; set; } = false;
     }
 }
