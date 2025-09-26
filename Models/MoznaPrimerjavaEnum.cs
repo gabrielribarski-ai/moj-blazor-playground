@@ -6,14 +6,14 @@ namespace IzracunInvalidnostiBlazor.Models
     public enum MoznaPrimerjavaEnum
     {
         [Description("L <=> S")]
-        L_primerjava_S, //LD
+        LS, //LD
         [Description("D <=> S")]
-        D_primerjava_S, //LD
+        DS, //LD
         [Description("L <=> D")]
-        L_primerjava_D, //LD
+        LD, //LD
         [Description("D <=> L")]
-        D_primerjava_L,//LD
+        DL,//LD
         [Description("E <=> S")]
-        E_primerjava_S //E
+        ES //E
     }
 }

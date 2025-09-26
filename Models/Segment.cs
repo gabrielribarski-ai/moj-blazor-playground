@@ -78,4 +78,68 @@ public class Segment
             .OrderBy(x => x.IzracunaniOdstotek)
         ?? Enumerable.Empty<MozniDeficit>();
 
+
+
+    public void IzracunajMozneDeficite()
+    {
+        // počisti stare opcije
+        OpcijeL.Clear();
+        OpcijeD.Clear();
+        OpcijeE.Clear();
+
+        // primer: če je simetrija LD
+        if (SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
+        {
+            foreach (var atribut in Atributi)
+            {
+                if (atribut.TipMeritve == TipMeritveEnum.NUM && atribut.StandardnaVrednost.HasValue)
+                {
+                    // izračunaj razliko L ↔ S
+                    if (atribut.Ocena.VrednostL.HasValue)
+                    {
+                        var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostL.Value;
+                        OpcijeL.Add(new MozniDeficit
+                        {
+                            StranLDE = StranLDE.L,
+                            MoznaPrimerjava = MoznaPrimerjavaEnum.LS,
+                            IzracunaniOdstotek = diff
+                        });
+                    }
+
+                    // izračunaj razliko D ↔ S
+                    if (atribut.Ocena.VrednostD.HasValue)
+                    {
+                        var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostD.Value;
+                        OpcijeD.Add(new MozniDeficit
+                        {
+                            StranLDE = StranLDE.D,
+                            MoznaPrimerjava = MoznaPrimerjavaEnum.DS,
+                            IzracunaniOdstotek = diff
+                        });
+                    }
+                }
+            }
+        }
+        else if (SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+        {
+            foreach (var atribut in Atributi)
+            {
+                if (atribut.TipMeritve == TipMeritveEnum.NUM && atribut.StandardnaVrednost.HasValue)
+                {
+                    if (atribut.Ocena.VrednostE.HasValue)
+                    {
+                        var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostE.Value;
+                        OpcijeE.Add(new MozniDeficit
+                        {
+                            Stran = StranLDE.E,
+                            MoznaPrimerjava = MoznaPrimerjavaEnum.ES,
+                            IzracunaniOdstotek = diff
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+
 }
