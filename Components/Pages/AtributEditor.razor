@@ -1,0 +1,48 @@
+﻿@using IzracunInvalidnostiBlazor.Models
+@typeparam TSegment
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Atribut</th>
+            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+            {
+                <th>E</th>
+            }
+            else
+            {
+                <th>L</th>
+                <th>S</th>
+                <th>D</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var atribut in Segment.Atributi)
+        {
+            <tr>
+                <td>@atribut.Opis</td>
+                @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+                {
+                    <td>
+                        <InputNumber @bind-Value="atribut.Ocena.VrednostE" class="form-control" />
+                    </td>
+                }
+                else
+                {
+                    <td>
+                        <InputNumber @bind-Value="atribut.Ocena.VrednostL" class="form-control" />
+                    </td>
+                    <td>@atribut.StandardnaVrednost</td>
+                    <td>
+                        <InputNumber @bind-Value="atribut.Ocena.VrednostD" class="form-control" />
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter] public Segment Segment { get; set; }
+}

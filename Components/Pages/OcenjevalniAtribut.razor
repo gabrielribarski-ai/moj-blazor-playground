@@ -91,70 +91,19 @@
         </div>
     }
 
-    @if (!FazaPredogleda)
-    {
-        <button class="btn btn-success mt-3" @onclick="PredogledIzracuna">
-            Izračunaj možnosti
-        </button>
-    }
-    else
-    {
-        <div class="mt-3 p-3 border rounded">
-            <h5>Izberi izračunane stopnje invalidnosti</h5>
+<AtributEditor Segment="Segment" />
 
-            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD )
-            {
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label">L stran</label>
-                        <select class="form-select" @bind="SelectedLPercent">
-                            <option value="">— izberi —</option>
-                            @foreach (var def in Segment.OpcijeL)
-                            {
-                                <option value="@def.IzracunaniOdstotek">
-                                    @GetDescription(def.MoznaPrimerjava) : @def.IzracunaniOdstotek?.ToString("0.0") %
-                                </option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">D stran</label>
-                        <select class="form-select" @bind="SelectedDPercent">
-                            <option value="">— izberi —</option>
-                            @foreach (var def in Segment.OpcijeD)
-                            {
-                                <option value="@def.IzracunaniOdstotek">
-                                    @GetDescription(def.MoznaPrimerjava) : @def.IzracunaniOdstotek?.ToString("0.0") %
-                                </option>
-                            }
-                        </select>
-                    </div>
-                </div>
-            }
-            else if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
-            {
-                <label class="form-label">E stran</label>
-                <select class="form-select" @bind="SelectedLPercent">
-                    <option value="">— izberi —</option>
-                    @foreach (var def in Segment.OpcijeE)
-                    {
-                        <option value="@def.IzracunaniOdstotek">
-                            @GetDescription(def.MoznaPrimerjava) : @def.IzracunaniOdstotek?.ToString("0.0") %
-                        </option>
-                    }
-                </select>
-            }
-
-            <div class="mt-3">
-                <button class="btn btn-primary"
-                        disabled="@(LahkoZakljuci() ? null : true)"
-                        @onclick="ZakljuciSegment">
-                    Zaključi segment
-                </button>
-            </div>
-        </div>
-    }
-
+@if (FazaPredogleda)
+{
+    <DeficitPreview Segment="Segment" />
+    <DeficitSelector Segment="Segment"
+                     SelectedLPercent="@SelectedLPercent"
+                     SelectedLPercentChanged="@((decimal? val) => SelectedLPercent = val)"
+                     SelectedDPercent="@SelectedDPercent"
+                     SelectedDPercentChanged="@((decimal? val) => SelectedDPercent = val)"
+                     SelectedEPercent="@SelectedEPercent"
+                     SelectedEPercentChanged="@((decimal? val) => SelectedEPercent = val)" />
+}
 </div>
 
 @code {
@@ -169,6 +118,7 @@
 
     private decimal? SelectedLPercent;
     private decimal? SelectedDPercent;
+    private decimal? SelectedEPercent;
 
     private void PredogledIzracuna()
     {

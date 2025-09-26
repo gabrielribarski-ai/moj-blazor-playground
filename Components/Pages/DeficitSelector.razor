@@ -1,0 +1,48 @@
+﻿@using IzracunInvalidnostiBlazor.Models
+
+@if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+{
+    <select class="form-select" @bind="SelectedEPercent">
+        <option value="">— izberi —</option>
+        @foreach (var def in Segment.OpcijeE)
+        {
+            <option value="@def.IzracunaniOdstotek">
+                @def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %
+            </option>
+        }
+    </select>
+}
+else
+{
+    <select class="form-select" @bind="SelectedLPercent">
+        <option value="">— izberi —</option>
+        @foreach (var def in Segment.OpcijeL)
+        {
+            <option value="@def.IzracunaniOdstotek">
+                @def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %
+            </option>
+        }
+    </select>
+
+    <select class="form-select mt-2" @bind="SelectedDPercent">
+        <option value="">— izberi —</option>
+        @foreach (var def in Segment.OpcijeD)
+        {
+            <option value="@def.IzracunaniOdstotek">
+                @def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %
+            </option>
+        }
+    </select>
+}
+
+@code {
+    [Parameter] public Segment Segment { get; set; }
+    [Parameter] public decimal? SelectedLPercent { get; set; }
+    [Parameter] public EventCallback<decimal?> SelectedLPercentChanged { get; set; }
+
+    [Parameter] public decimal? SelectedDPercent { get; set; }
+    [Parameter] public EventCallback<decimal?> SelectedDPercentChanged { get; set; }
+
+    [Parameter] public decimal? SelectedEPercent { get; set; }
+    [Parameter] public EventCallback<decimal?> SelectedEPercentChanged { get; set; }
+}

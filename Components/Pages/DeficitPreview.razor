@@ -1,0 +1,28 @@
+﻿@using IzracunInvalidnostiBlazor.Models
+
+@if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+{
+    <ul>
+        @foreach (var def in Segment.OpcijeE)
+        {
+            <li>@def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %</li>
+        }
+    </ul>
+}
+else
+{
+    <ul>
+        @foreach (var def in Segment.OpcijeL)
+        {
+            <li>@def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %</li>
+        }
+        @foreach (var def in Segment.OpcijeD)
+        {
+            <li>@def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %</li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public Segment Segment { get; set; }
+}
