@@ -6,7 +6,9 @@
 {
     <!-- Enostranski segment -->
     <label for="selectE">Izberi deficit:</label>
-    <select id="selectE" class="form-select" @bind="SelectedEPercent">
+    <select id="selectE" class="form-select"
+            @bind-Value="SelectedEPercent"
+            @bind-Value:event="onchange">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeE)
         {
@@ -20,7 +22,9 @@ else
 {
     <!-- Dvostranski segment -->
     <label for="selectL"><b>Leva stran</b></label>
-    <select id="selectL" class="form-select" @bind="SelectedLPercent">
+    <select id="selectL" class="form-select"
+            @bind-Value="SelectedLPercent"
+            @bind-Value:event="onchange">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeL)
         {
@@ -31,7 +35,9 @@ else
     </select>
 
     <label for="selectD" class="mt-2"><b>Desna stran</b></label>
-    <select id="selectD" class="form-select" @bind="SelectedDPercent">
+    <select id="selectD" class="form-select"
+            @bind-Value="SelectedDPercent"
+            @bind-Value:event="onchange">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeD)
         {

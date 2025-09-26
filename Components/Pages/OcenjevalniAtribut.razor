@@ -37,6 +37,13 @@
                          SelectedEPercent="@SelectedEPercent"
                          SelectedEPercentChanged="@((decimal? val) => SelectedEPercent = val)" />
 
+        @if (LahkoPotrdi())
+        {
+            <button class="btn btn-success mt-3" @onclick="PotrdiOceno">
+                Potrdi oceno
+            </button>
+        }
+
         <!-- Debug izpis -->
         <button class="btn btn-link mt-2" type="button" @onclick="ToggleDebug">
             🔍 Pokaži debug izpis
@@ -70,13 +77,9 @@
             </div>
         }
 
-        @if (LahkoPotrdi())
-        {
-            <button class="btn btn-success mt-3" @onclick="PotrdiOceno">
-                Potrdi oceno
-            </button>
-        }
+
     }
+
 </div>
 @code {
     [Parameter] public Segment Segment { get; set; } = default!;
@@ -110,12 +113,13 @@
 
     private bool LahkoPotrdi()
     {
-        return Segment.SimetrijaDelaTelesa switch
+        bool b=Segment.SimetrijaDelaTelesa switch
         {
             SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue && SelectedDPercent.HasValue,
             SimetrijaDelaTelesa.E => SelectedEPercent.HasValue,
             _ => false
         };
+        return b;
     }
 
     private async Task PotrdiOceno()
@@ -134,18 +138,6 @@
         await OnOcenaPotrjena.InvokeAsync(Segment);
     }
 
-
-    private bool LahkoZakljuci()
-    {
-        return Segment.SimetrijaDelaTelesa switch
-        {
-            // dvostranski: zahtevaj izbiro za obe strani
-            SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue && SelectedDPercent.HasValue,
-            // enostranski: zahtevaj E izbiro
-            SimetrijaDelaTelesa.E => SelectedEPercent.HasValue,
-            _ => false
-        };
-    }
 
     private async Task ZakljuciSegment()
     {
