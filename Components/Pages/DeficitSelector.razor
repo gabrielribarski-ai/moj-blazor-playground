@@ -1,9 +1,12 @@
 ﻿@using CustomTypeExtensions
 @using IzracunInvalidnostiBlazor.Models
+@using IzracunInvalidnostiBlazor.Extensions
 
 @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
 {
-    <select class="form-select" @bind="SelectedEPercent">
+    <!-- Enostranski segment -->
+    <label for="selectE">Izberi deficit:</label>
+    <select id="selectE" class="form-select" @bind="SelectedEPercent">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeE)
         {
@@ -15,7 +18,9 @@
 }
 else
 {
-    <select class="form-select" @bind="SelectedLPercent">
+    <!-- Dvostranski segment -->
+    <label for="selectL"><b>Leva stran</b></label>
+    <select id="selectL" class="form-select" @bind="SelectedLPercent">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeL)
         {
@@ -25,7 +30,8 @@ else
         }
     </select>
 
-    <select class="form-select mt-2" @bind="SelectedDPercent">
+    <label for="selectD" class="mt-2"><b>Desna stran</b></label>
+    <select id="selectD" class="form-select" @bind="SelectedDPercent">
         <option value="">— izberi —</option>
         @foreach (var def in Segment.OpcijeD)
         {
@@ -38,6 +44,7 @@ else
 
 @code {
     [Parameter] public Segment Segment { get; set; }
+
     [Parameter] public decimal? SelectedLPercent { get; set; }
     [Parameter] public EventCallback<decimal?> SelectedLPercentChanged { get; set; }
 

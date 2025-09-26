@@ -9,46 +9,52 @@
 @using Microsoft.AspNetCore.Mvc
 @inject IOptions<JsonOptions> JsonOptions
 
+
+    <!-- 1. Vnos atributov -->
 <div class="p-3 border rounded">
+
     <h5>@Segment.Opis</h5>
 
     <!-- 1. Vnos atributov -->
     <AtributEditor Segment="Segment" />
 
-    <!-- 2. Potrdi oceno -->
-    @if (!FazaPotrjena)
+    <!-- 2. Gumb Izračunaj -->
+    @if (LahkoIzracunaj())
     {
-        <button class="btn btn-primary mt-3" @onclick="PotrdiOceno">
-            Potrdi oceno
+        <button class="btn btn-primary mt-3" @onclick="Izracunaj">
+            Izračunaj
         </button>
     }
 
-    @if (FazaPotrjena)
+    <!-- 3. Dropdowni + debug -->
+    @if (FazaIzracunano)
     {
-        <button class="btn btn-link mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#debugCollapse">
+        <DeficitSelector Segment="Segment"
+                         SelectedLPercent="@SelectedLPercent"
+                         SelectedLPercentChanged="@((decimal? val) => SelectedLPercent = val)"
+                         SelectedDPercent="@SelectedDPercent"
+                         SelectedDPercentChanged="@((decimal? val) => SelectedDPercent = val)"
+                         SelectedEPercent="@SelectedEPercent"
+                         SelectedEPercentChanged="@((decimal? val) => SelectedEPercent = val)" />
+
+        <!-- Debug izpis -->
+        <button class="btn btn-link mt-2" type="button" @onclick="ToggleDebug">
             🔍 Pokaži debug izpis
         </button>
 
-        <div class="collapse mt-2" id="debugCollapse">
-            <div class="card card-body">
+        @if (ShowDebug)
+        {
+            <div class="card card-body mt-2">
                 <h6>Debug podatki</h6>
                 <ul>
-                    <li><b>Standard skupaj:</b> @Segment.IzmerjeniDeficit.StandardSkupaj</li>
-                    <li><b>Gibljivost L:</b> @Segment.IzmerjeniDeficit.GibljivostSkupajL</li>
-                    <li><b>Gibljivost D:</b> @Segment.IzmerjeniDeficit.GibljivostSkupajD</li>
-                    <li><b>Gibljivost E:</b> @Segment.IzmerjeniDeficit.GibljivostSkupajE</li>
+                    <li>Standard skupaj: @Segment.IzmerjeniDeficit.StandardSkupaj</li>
+                    <li>Gibljivost L: @Segment.IzmerjeniDeficit.GibljivostSkupajL</li>
+                    <li>Gibljivost D: @Segment.IzmerjeniDeficit.GibljivostSkupajD</li>
+                    <li>Gibljivost E: @Segment.IzmerjeniDeficit.GibljivostSkupajE</li>
                 </ul>
-
                 <h6>Možni deficiti</h6>
                 <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Primerjava</th>
-                            <th>Stran</th>
-                            <th>Deficit %</th>
-                            <th>Izračunani odstotek</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Primerjava</th><th>Stran</th><th>Deficit %</th><th>Izračunani odstotek</th></tr></thead>
                     <tbody>
                         @foreach (var d in Segment.MozniDeficitNabor)
                         {
@@ -62,56 +68,74 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    }
+        }
 
-    <!-- Info alert po potrditvi -->
-    @if (FazaPotrjena && !PokazalAlert)
-    {
-        <div class="alert alert-info mt-3" role="alert">
-            Možni deficiti so izračunani. Izberite vrednosti iz dropdownov.
-        </div>
-    }
-
-    <!-- 3. Izbor deficita -->
-    @if (FazaPotrjena)
-    {
-        <DeficitSelector Segment="Segment"
-                         SelectedLPercent="@SelectedLPercent"
-                         SelectedLPercentChanged="@((decimal? val) => SelectedLPercent = val)"
-                         SelectedDPercent="@SelectedDPercent"
-                         SelectedDPercentChanged="@((decimal? val) => SelectedDPercent = val)"
-                         SelectedEPercent="@SelectedEPercent"
-                         SelectedEPercentChanged="@((decimal? val) => SelectedEPercent = val)" />
-
-        <!-- 4. Zaključi segment (prikaže se šele, ko so izbrane zahtevane vrednosti) -->
-        @if (LahkoZakljuci())
+        @if (LahkoPotrdi())
         {
-            <button class="btn btn-success mt-3" @onclick="ZakljuciSegment">
-                Zaključi segment
+            <button class="btn btn-success mt-3" @onclick="PotrdiOceno">
+                Potrdi oceno
             </button>
         }
     }
 </div>
-
 @code {
     [Parameter] public Segment Segment { get; set; } = default!;
     [Parameter] public EventCallback<Segment> OnOcenaPotrjena { get; set; }
 
-    private bool FazaPotrjena = false;
-    private bool PokazalAlert = false;
+    private bool FazaIzracunano = false;
+    private bool ShowDebug = false;
 
     private decimal? SelectedLPercent;
     private decimal? SelectedDPercent;
     private decimal? SelectedEPercent;
-
-    private void PotrdiOceno()
+    private void Izracunaj()
     {
-        IzracunajDeficit();      // centralni obračun (počisti + izračuna kandidate)
-        log_segment();
-        FazaPotrjena = true;
-        PokazalAlert = false;
+        IzracunajDeficit();
+        FazaIzracunano = true;
     }
+
+    private void ToggleDebug() => ShowDebug = !ShowDebug;
+
+    private bool LahkoIzracunaj()
+    {
+        // preveri, da so vsi atributi vneseni
+        return Segment.Atributi.All(a =>
+            Segment.SimetrijaDelaTelesa switch
+            {
+                SimetrijaDelaTelesa.LD => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true,
+                SimetrijaDelaTelesa.E => a.Ocena?.VrednostE.HasValue == true,
+                _ => false
+            });
+    }
+
+    private bool LahkoPotrdi()
+    {
+        return Segment.SimetrijaDelaTelesa switch
+        {
+            SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue && SelectedDPercent.HasValue,
+            SimetrijaDelaTelesa.E => SelectedEPercent.HasValue,
+            _ => false
+        };
+    }
+
+
+
+    private async Task PotrdiOceno()
+    {
+        Segment.ClearIzberiMozniDeficit();
+
+        if (SelectedLPercent.HasValue)
+            Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value)!.JeIzbran = true;
+        if (SelectedDPercent.HasValue)
+            Segment.FindMozniDeficit(StranLDE.D, SelectedDPercent.Value)!.JeIzbran = true;
+        if (SelectedEPercent.HasValue)
+            Segment.FindMozniDeficit(StranLDE.E, SelectedEPercent.Value)!.JeIzbran = true;
+
+        Segment.OcenaPotrjena = true;
+
+        await OnOcenaPotrjena.InvokeAsync(Segment);
+    }
+
 
     private bool LahkoZakljuci()
     {
@@ -151,7 +175,7 @@
         await OnOcenaPotrjena.InvokeAsync(Segment);
 
         // vrni komponento v začetno stanje za nadaljevanje ali naslednji segment
-        FazaPotrjena = false;
+        //FazaPotrjena = false;
         SelectedLPercent = null;
         SelectedDPercent = null;
         SelectedEPercent = null;
@@ -159,11 +183,7 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (FazaPotrjena && !PokazalAlert)
-        {
-            PokazalAlert = true; // alert se pokaže enkrat po potrditvi
-            StateHasChanged();
-        }
+
     }
 
     // ——————————————————————————————————————————————————————————
