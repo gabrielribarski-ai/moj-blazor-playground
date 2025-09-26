@@ -7,89 +7,11 @@
 @using System.ComponentModel;
 @inject NavigationManager Nav
 @inject ILogger<Index> Logger
-
 @using Microsoft.AspNetCore.Mvc
 @inject IOptions<JsonOptions> JsonOptions
 
 <div class="segment-box listni">
     <h4>@Segment.Opis</h4>
-
-    @foreach (var atribut in Segment.Atributi)
-    {
-        <div class="atribut-row">
-            <label>@atribut.Opis (@atribut.Enota)</label>
-
-            <table class="atribut-tabela">
-                <thead>
-                    <tr>
-                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
-                        {
-                            <th>E</th>
-                        }
-                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
-                        {
-                            <th>L</th>
-                        }
-                        <th>S</th>
-                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
-                        {
-                            <th>D</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
-                        {
-                            <td>
-                                @if (atribut.TipMeritve == TipMeritveEnum.NUM)
-                                {
-                                    <InputNumber @bind-Value="atribut.Ocena.VrednostE" class="form-control" />
-                                }
-                                else
-                                @if (atribut.TipMeritve == TipMeritveEnum.BOOL)
-                                {
-                                    <InputCheckbox @bind-Value="atribut.Ocena.VrednostE_Bool" />
-                                }
-                            </td>
-                            }
-                     
-                            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
-                        {
-                        <td>
-                            @if (atribut.TipMeritve == TipMeritveEnum.NUM )
-                            {
-                                <InputNumber @bind-Value="atribut.Ocena.VrednostL" class="form-control" />
-                            }
-                            else
-                            @if (atribut.TipMeritve == TipMeritveEnum.BOOL )
-                            {
-                                <InputCheckbox @bind-Value="atribut.Ocena.VrednostL_Bool" />
-                            }
-                        </td>
-                        }
-                        <td>
-                            @atribut.StandardnaVrednost
-                        </td>
-                        @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
-                        {
-                            <td>
-                                @if (atribut.TipMeritve == TipMeritveEnum.NUM)
-                                {
-                                    <InputNumber @bind-Value="atribut.Ocena.VrednostD" class="form-control" />
-                                }
-                                else
-                                @if (atribut.TipMeritve == TipMeritveEnum.BOOL )
-                                {
-                                    <InputCheckbox @bind-Value="atribut.Ocena.VrednostD_Bool" />
-                                }
-                            </td>
-                        }
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    }
 
 <AtributEditor Segment="Segment" />
 
@@ -234,11 +156,11 @@
 
         var kandidati = new[]
         {
-            MakeDeficit(MoznaPrimerjavaEnum.E_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajE, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.E),
-            MakeDeficit(MoznaPrimerjavaEnum.D_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.D),
-            MakeDeficit(MoznaPrimerjavaEnum.L_primerjava_S, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.L),
-            MakeDeficit(MoznaPrimerjavaEnum.L_primerjava_D, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.GibljivostSkupajD, StranLDE.L),
-            MakeDeficit(MoznaPrimerjavaEnum.D_primerjava_L, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.GibljivostSkupajL, StranLDE.D)
+            MakeDeficit(MoznaPrimerjavaEnum.ES, Segment.IzmerjeniDeficit.GibljivostSkupajE, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.E),
+            MakeDeficit(MoznaPrimerjavaEnum.DS, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.D),
+            MakeDeficit(MoznaPrimerjavaEnum.LS, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.L),
+            MakeDeficit(MoznaPrimerjavaEnum.LD, Segment.IzmerjeniDeficit.GibljivostSkupajL, Segment.IzmerjeniDeficit.GibljivostSkupajD, StranLDE.L),
+            MakeDeficit(MoznaPrimerjavaEnum.DL, Segment.IzmerjeniDeficit.GibljivostSkupajD, Segment.IzmerjeniDeficit.GibljivostSkupajL, StranLDE.D)
         };
 
         Segment.MozniDeficitNabor = Segment.MozniDeficitNabor ?? new List<MozniDeficit>();

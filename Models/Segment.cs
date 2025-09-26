@@ -28,7 +28,23 @@ public class Segment
 
     public IzmerjeniDeficit IzmerjeniDeficit { get; set; }
 
-    public List<MozniDeficit> MozniDeficitNabor { get; set; }
+    public List<MozniDeficit> MozniDeficitNabor { get; set; } = new();
+
+    public IEnumerable<MozniDeficit> OpcijeL =>
+        MozniDeficitNabor
+            .Where(x => x.StranLDE == StranLDE.L && x.IzracunaniOdstotek.HasValue)
+            .OrderBy(x => x.IzracunaniOdstotek);
+
+    public IEnumerable<MozniDeficit> OpcijeD =>
+        MozniDeficitNabor
+            .Where(x => x.StranLDE == StranLDE.D && x.IzracunaniOdstotek.HasValue)
+            .OrderBy(x => x.IzracunaniOdstotek);
+
+    public IEnumerable<MozniDeficit> OpcijeE =>
+        MozniDeficitNabor
+            .Where(x => x.StranLDE == StranLDE.E && x.IzracunaniOdstotek.HasValue)
+            .OrderBy(x => x.IzracunaniOdstotek);
+
 
     // Za gradnjo drevesa v aplikaciji
     public List<Segment> PodSegment { get; set; } 
@@ -60,45 +76,22 @@ public class Segment
 
     }
 
-    public IEnumerable<MozniDeficit> OpcijeL =>
-        MozniDeficitNabor?
-            .Where(x => x.StranLDE == StranLDE.L && x.IzracunaniOdstotek.HasValue)
-            .OrderBy(x => x.IzracunaniOdstotek)
-        ?? Enumerable.Empty<MozniDeficit>();
-
-    public IEnumerable<MozniDeficit> OpcijeD =>
-        MozniDeficitNabor?
-            .Where(x => x.StranLDE == StranLDE.D && x.IzracunaniOdstotek.HasValue)
-            .OrderBy(x => x.IzracunaniOdstotek)
-        ?? Enumerable.Empty<MozniDeficit>();
-
-    public IEnumerable<MozniDeficit> OpcijeE =>
-        MozniDeficitNabor?
-            .Where(x => x.StranLDE == StranLDE.E && x.IzracunaniOdstotek.HasValue)
-            .OrderBy(x => x.IzracunaniOdstotek)
-        ?? Enumerable.Empty<MozniDeficit>();
-
-
 
     public void IzracunajMozneDeficite()
     {
-        // počisti stare opcije
-        OpcijeL.Clear();
-        OpcijeD.Clear();
-        OpcijeE.Clear();
+        // počisti osnovni nabor
+        MozniDeficitNabor.Clear();
 
-        // primer: če je simetrija LD
         if (SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
         {
             foreach (var atribut in Atributi)
             {
                 if (atribut.TipMeritve == TipMeritveEnum.NUM && atribut.StandardnaVrednost.HasValue)
                 {
-                    // izračunaj razliko L ↔ S
                     if (atribut.Ocena.VrednostL.HasValue)
                     {
                         var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostL.Value;
-                        OpcijeL.Add(new MozniDeficit
+                        MozniDeficitNabor.Add(new MozniDeficit
                         {
                             StranLDE = StranLDE.L,
                             MoznaPrimerjava = MoznaPrimerjavaEnum.LS,
@@ -106,11 +99,10 @@ public class Segment
                         });
                     }
 
-                    // izračunaj razliko D ↔ S
                     if (atribut.Ocena.VrednostD.HasValue)
                     {
                         var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostD.Value;
-                        OpcijeD.Add(new MozniDeficit
+                        MozniDeficitNabor.Add(new MozniDeficit
                         {
                             StranLDE = StranLDE.D,
                             MoznaPrimerjava = MoznaPrimerjavaEnum.DS,
@@ -129,9 +121,9 @@ public class Segment
                     if (atribut.Ocena.VrednostE.HasValue)
                     {
                         var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostE.Value;
-                        OpcijeE.Add(new MozniDeficit
+                        MozniDeficitNabor.Add(new MozniDeficit
                         {
-                            Stran = StranLDE.E,
+                            StranLDE = StranLDE.E,
                             MoznaPrimerjava = MoznaPrimerjavaEnum.ES,
                             IzracunaniOdstotek = diff
                         });
@@ -140,6 +132,9 @@ public class Segment
             }
         }
     }
+
+
+
 
 
 }
