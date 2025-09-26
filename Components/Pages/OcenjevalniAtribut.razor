@@ -23,6 +23,48 @@
         </button>
     }
 
+    @if (FazaPotrjena)
+    {
+        <button class="btn btn-link mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#debugCollapse">
+            🔍 Pokaži debug izpis
+        </button>
+
+        <div class="collapse mt-2" id="debugCollapse">
+            <div class="card card-body">
+                <h6>Debug podatki</h6>
+                <ul>
+                    <li><b>Standard skupaj:</b> @Segment.IzmerjeniDeficit.StandardSkupaj</li>
+                    <li><b>Gibljivost L:</b> @Segment.IzmerjeniDeficit.GibljivostSkupajL</li>
+                    <li><b>Gibljivost D:</b> @Segment.IzmerjeniDeficit.GibljivostSkupajD</li>
+                    <li><b>Gibljivost E:</b> @Segment.IzmerjeniDeficit.GibljivostSkupajE</li>
+                </ul>
+
+                <h6>Možni deficiti</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Primerjava</th>
+                            <th>Stran</th>
+                            <th>Deficit %</th>
+                            <th>Izračunani odstotek</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Segment.MozniDeficitNabor)
+                        {
+                            <tr>
+                                <td>@d.MoznaPrimerjava</td>
+                                <td>@d.StranLDE</td>
+                                <td>@d.Deficit?.ToString("0.00") %</td>
+                                <td>@d.IzracunaniOdstotek?.ToString("0.00")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
     <!-- Info alert po potrditvi -->
     @if (FazaPotrjena && !PokazalAlert)
     {
