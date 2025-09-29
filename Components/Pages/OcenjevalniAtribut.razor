@@ -250,6 +250,8 @@
                 atr.Ocena = new();
         }
     }
+
+
     private void AddIfValid(MoznaPrimerjavaEnum tip, decimal dejanska, decimal referenca, StranLDE stran, List<StopnjaDeficita> vseStopnje)
     {
         // zaščita pred deljenjem z 0
@@ -265,9 +267,11 @@
             MoznaPrimerjava = tip,
             Deficit = deficit,
             StranLDE = stran,
+            IzbiraOpis = $"{tip.GetDescription()}: {odstotek:0.0} %",
             IzracunaniOdstotek = odstotek
         });
     }
+
 
     private decimal CalcDeficit(decimal dejanska, decimal referenca)
     {
