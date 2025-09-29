@@ -121,7 +121,7 @@
         };
         return b;
     }
-
+    /*
     private async Task PotrdiOceno()
     {
         Segment.ClearIzberiMozniDeficit();
@@ -136,6 +136,22 @@
         Segment.OcenaPotrjena = true;
 
         await OnOcenaPotrjena.InvokeAsync(Segment);
+    }
+    */
+
+    private async Task PotrdiOceno()
+    {
+        // resetiraj in označi izbrane
+        foreach (var def in Segment.MozniDeficitNabor)
+        {
+            def.JeIzbran = false;
+            if (def.StranLDE == StranLDE.L && def.IzracunaniOdstotek == SelectedLPercent) def.JeIzbran = true;
+            if (def.StranLDE == StranLDE.D && def.IzracunaniOdstotek == SelectedDPercent) def.JeIzbran = true;
+            if (def.StranLDE == StranLDE.E && def.IzracunaniOdstotek == SelectedEPercent) def.JeIzbran = true;
+        }
+
+        if (OnOcenaPotrjena.HasDelegate)
+            await OnOcenaPotrjena.InvokeAsync(Segment);
     }
 
 

@@ -38,12 +38,13 @@ else
             </div>
 
             <!-- Atributi -->
-            @if (ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
+            @if (ocenjevalniModel?.trenutniSegment != null
+                    && ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
             {
-                <OcenjevalniAtribut Segment="ocenjevalniModel?.trenutniSegment"
-                                    @key="ocenjevalniModel?.trenutniSegment?.SegmentId"
+                <OcenjevalniAtribut Segment="ocenjevalniModel.trenutniSegment"
                                     OnOcenaPotrjena="OnSegmentPotrjen" />
             }
+
 
             <!-- Podsegmenti -->
             @foreach (var podsegment in ocenjevalniModel?.SegmentiZaPrikaz)
@@ -73,8 +74,7 @@ else
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span><b>@seg.Opis</b></span>
                                 <span>@total.ToString("0.0") %</span>
-                                <button class="btn btn-sm btn-outline-primary"
-                                        @onclick="() => UrediSegment(seg)">
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => VpogledUrejanjeSegmenta(seg)">
                                     Vpogled
                                 </button>
                             </li>
@@ -97,11 +97,28 @@ else
     private Segment? TrenutniSegment;
 
     private OcenjevalniModel ocenjevalniModel;
-
+    private decimal? SelectedLPercent { get; set; }
+    private decimal? SelectedDPercent { get; set; }
+    private decimal? SelectedEPercent { get; set; }
     private List<Segment> OcenjeniSegmenti = new();
     private decimal SkupnaInvalidnost;
 
     private List<Segment> BreadcrumbPath = new();
+
+    protected override void OnParametersSet()
+    {
+        if (TrenutniSegment?.MozniDeficitNabor == null)
+            return;
+
+        var izbrani = TrenutniSegment.MozniDeficitNabor
+                             .Where(d => d.JeIzbran)
+                             .ToList();
+
+        SelectedLPercent = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.L)?.IzracunaniOdstotek;
+        SelectedDPercent = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.D)?.IzracunaniOdstotek;
+        SelectedEPercent = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.E)?.IzracunaniOdstotek;
+    }
+
 
     private void IzberiSegment(Segment seg)
     {
@@ -166,9 +183,13 @@ else
     }
 
 
-    private void UrediSegment(Segment seg)
+    private void VpogledUrejanjeSegmenta(Segment seg)
     {
-        TrenutniSegment = seg;
+        // nastavi izbran segment kot trenutnega
+        ocenjevalniModel.trenutniSegment = seg;
+
+        // opcijsko: resetiraj fazo, da se dropdowni prikažejo
+        StateHasChanged();
     }
 
 
