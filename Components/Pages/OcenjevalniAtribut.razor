@@ -19,15 +19,16 @@
     <AtributEditor Segment="Segment" />
 
     <!-- 2. Gumb Izračunaj -->
-    @if (LahkoIzracunaj())
+    @if (Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.OceneSoVnesene)
+    @*@if (AliSoOceneVnesene())*@
     {
-        <button class="btn btn-primary mt-3" @onclick="Izracunaj">
+        <button class="btn btn-primary mt-3" @onclick="IzracunajMozneDeficite">
             Izračunaj
         </button>
     }
 
     <!-- 3. Dropdowni + debug -->
-    @if (FazaIzracunano)
+    @if (Segment.FazaOcenjevanja==FazaOcenjevanjaEnum.DeficitiIzracunani)
     {
         <DeficitSelector Segment="Segment"
                          SelectedLPercent="@SelectedLPercent"
@@ -37,9 +38,9 @@
                          SelectedEPercent="@SelectedEPercent"
                          SelectedEPercentChanged="@((decimal? v) => SelectedEPercent = v)" />
 
-        @if (LahkoPotrdi())
+        @if (Segment.FazaOcenjevanja==FazaOcenjevanjaEnum.DeficitiIzracunani)
         {
-            <button class="btn btn-success mt-3" @onclick="PotrdiOceno">
+            <button class="btn btn-success mt-3" @onclick="PotrdiIzracunanDeficit">
                 Potrdi oceno
             </button>
         }
@@ -76,126 +77,22 @@
                 </table>
             </div>
         }
-
-
     }
 
 </div>
 @code {
+
+
     [Parameter] public Segment Segment { get; set; } = default!;
     [Parameter] public EventCallback<Segment> OnOcenaPotrjena { get; set; }
 
-    private bool FazaIzracunano = false;
     private bool ShowDebug = false;
 
     private decimal? SelectedLPercent;
     private decimal? SelectedDPercent;
     private decimal? SelectedEPercent;
-    private void Izracunaj()
-    {
-        IzracunajDeficit();
-        FazaIzracunano = true;
-    }
 
-    private void ToggleDebug() => ShowDebug = !ShowDebug;
-
-    private bool LahkoIzracunaj()
-    {
-        // preveri, da so vsi atributi vneseni
-        return Segment.Atributi.All(a =>
-            Segment.SimetrijaDelaTelesa switch
-            {
-                SimetrijaDelaTelesa.LD => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true,
-                SimetrijaDelaTelesa.E => a.Ocena?.VrednostE.HasValue == true,
-                _ => false
-            });
-    }
-
-    private bool LahkoPotrdi()
-    {
-        bool b=Segment.SimetrijaDelaTelesa switch
-        {
-            SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue && SelectedDPercent.HasValue,
-            SimetrijaDelaTelesa.E => SelectedEPercent.HasValue,
-            _ => false
-        };
-        return b;
-    }
-    /*
-    private async Task PotrdiOceno()
-    {
-        Segment.ClearIzberiMozniDeficit();
-
-        if (SelectedLPercent.HasValue)
-            Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value)!.JeIzbran = true;
-        if (SelectedDPercent.HasValue)
-            Segment.FindMozniDeficit(StranLDE.D, SelectedDPercent.Value)!.JeIzbran = true;
-        if (SelectedEPercent.HasValue)
-            Segment.FindMozniDeficit(StranLDE.E, SelectedEPercent.Value)!.JeIzbran = true;
-
-        Segment.OcenaPotrjena = true;
-
-        await OnOcenaPotrjena.InvokeAsync(Segment);
-    }
-    */
-
-    private async Task PotrdiOceno()
-    {
-        // resetiraj in označi izbrane
-        foreach (var def in Segment.MozniDeficitNabor)
-        {
-            def.JeIzbran = false;
-            if (def.StranLDE == StranLDE.L && def.IzracunaniOdstotek == SelectedLPercent) def.JeIzbran = true;
-            if (def.StranLDE == StranLDE.D && def.IzracunaniOdstotek == SelectedDPercent) def.JeIzbran = true;
-            if (def.StranLDE == StranLDE.E && def.IzracunaniOdstotek == SelectedEPercent) def.JeIzbran = true;
-        }
-
-        if (OnOcenaPotrjena.HasDelegate)
-            await OnOcenaPotrjena.InvokeAsync(Segment);
-    }
-
-
-    private async Task ZakljuciSegment()
-    {
-        // reset izbir označenih
-        Segment.ClearIzberiMozniDeficit();
-
-        if (SelectedLPercent.HasValue)
-        {
-            var L = Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value);
-            if (L is not null) L.JeIzbran = true;
-        }
-
-        if (SelectedDPercent.HasValue)
-        {
-            var D = Segment.FindMozniDeficit(StranLDE.D, SelectedDPercent.Value);
-            if (D is not null) D.JeIzbran = true;
-        }
-
-        if (SelectedEPercent.HasValue)
-        {
-            var E = Segment.FindMozniDeficit(StranLDE.E, SelectedEPercent.Value);
-            if (E is not null) E.JeIzbran = true;
-        }
-
-        await OnOcenaPotrjena.InvokeAsync(Segment);
-
-        // vrni komponento v začetno stanje za nadaljevanje ali naslednji segment
-        //FazaPotrjena = false;
-        SelectedLPercent = null;
-        SelectedDPercent = null;
-        SelectedEPercent = null;
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-
-    }
-
-    // ——————————————————————————————————————————————————————————
-    // CENTRALNI IZRAČUN: pravilno polni MozniDeficitNabor (brez podvajanja)
-    // ——————————————————————————————————————————————————————————
-    private void IzracunajDeficit()
+    private void IzracunajMozneDeficite()
     {
         // 1) agregati
         Segment.IzmerjeniDeficit = new();
@@ -255,9 +152,104 @@
             .OrderBy(d => d.StranLDE)
             .ThenBy(d => d.IzracunaniOdstotek)
             .ToList();
-
-            log_segment();
+        Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzracunani;
+        log_segment();
     }
+
+    private void ToggleDebug() => ShowDebug = !ShowDebug;
+
+
+
+    private bool AliSoOceneVnesene()
+    {
+        bool b = Segment.Atributi.All(a =>
+             Segment.SimetrijaDelaTelesa switch
+             {
+                 SimetrijaDelaTelesa.LD => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true,
+                 SimetrijaDelaTelesa.E => a.Ocena?.VrednostE.HasValue == true,
+                 _ => false
+             });
+
+        if (b)
+            Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
+        return b;
+    }
+
+
+    private void LahkoPotrdi()
+    {
+        bool b=Segment.SimetrijaDelaTelesa switch
+        {
+            SimetrijaDelaTelesa.LD => SelectedLPercent.HasValue && SelectedDPercent.HasValue,
+            SimetrijaDelaTelesa.E => SelectedEPercent.HasValue,
+            _ => false
+        };
+        if (b)
+            Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzbrani;
+    }
+
+    private async Task PotrdiIzracunanDeficit()
+    {
+        Segment.ClearIzberiMozniDeficit();
+
+        if (SelectedLPercent.HasValue)
+            Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value)!.JeIzbran = true;
+        if (SelectedDPercent.HasValue)
+            Segment.FindMozniDeficit(StranLDE.D, SelectedDPercent.Value)!.JeIzbran = true;
+        if (SelectedEPercent.HasValue)
+            Segment.FindMozniDeficit(StranLDE.E, SelectedEPercent.Value)!.JeIzbran = true;
+
+        Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzbrani;
+        await OnOcenaPotrjena.InvokeAsync(Segment);
+    }
+
+
+    private async Task ZakljuciSegment()
+    {
+        // reset izbir označenih
+        Segment.ClearIzberiMozniDeficit();
+
+        if (SelectedLPercent.HasValue)
+        {
+            var L = Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value);
+            if (L is not null) L.JeIzbran = true;
+        }
+
+        if (SelectedDPercent.HasValue)
+        {
+            var D = Segment.FindMozniDeficit(StranLDE.D, SelectedDPercent.Value);
+            if (D is not null) D.JeIzbran = true;
+        }
+
+        if (SelectedEPercent.HasValue)
+        {
+            var E = Segment.FindMozniDeficit(StranLDE.E, SelectedEPercent.Value);
+            if (E is not null) E.JeIzbran = true;
+        }
+
+        await OnOcenaPotrjena.InvokeAsync(Segment);
+
+        // vrni komponento v začetno stanje za nadaljevanje ali naslednji segment
+        //FazaPotrjena = false;
+        SelectedLPercent = null;
+        SelectedDPercent = null;
+        SelectedEPercent = null;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+
+    }
+
+    // ——————————————————————————————————————————————————————————
+    // CENTRALNI IZRAČUN: pravilno polni MozniDeficitNabor (brez podvajanja)
+    // ——————————————————————————————————————————————————————————
+    private void IzracunajDeficit()
+    {
+
+    }
+
+
     protected override async Task OnInitializedAsync()
     {
         foreach (var atr in Segment.Atributi)
@@ -266,8 +258,6 @@
                 atr.Ocena = new();
         }
     }
-
-
     private void AddIfValid(MoznaPrimerjavaEnum tip, decimal dejanska, decimal referenca, StranLDE stran, List<StopnjaDeficita> vseStopnje)
     {
         // zaščita pred deljenjem z 0
@@ -283,11 +273,9 @@
             MoznaPrimerjava = tip,
             Deficit = deficit,
             StranLDE = stran,
-            IzbiraOpis = $"{tip.GetDescription()}: {odstotek:0.0} %",
             IzracunaniOdstotek = odstotek
         });
     }
-
 
     private decimal CalcDeficit(decimal dejanska, decimal referenca)
     {

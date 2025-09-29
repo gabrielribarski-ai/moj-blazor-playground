@@ -9,6 +9,15 @@ public enum SimetrijaDelaTelesa
     LD, E
 }
 
+public enum FazaOcenjevanjaEnum
+{
+    Ocenjevanje,
+    OceneSoVnesene,
+    DeficitiIzracunani,
+    DeficitiIzbrani,
+    Urejanje, Vpogled
+}
+
 
 public class Segment
 {
@@ -32,6 +41,8 @@ public class Segment
 
     public List<MozniDeficit> MozniDeficitNabor { get; set; } = new();
 
+    public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; } =FazaOcenjevanjaEnum.Ocenjevanje;
+
     public IEnumerable<MozniDeficit> OpcijeL =>
         MozniDeficitNabor
             .Where(x => x.StranLDE == StranLDE.L && x.IzracunaniOdstotek.HasValue)
@@ -52,8 +63,6 @@ public class Segment
     //public List<Segment> PodSegment { get; set; } 
 
     public bool ImaOcenjevalneAtribute { get; set; }
-
-     public bool OcenaPotrjena { get; set; }
 
     public MozniDeficit FindMozniDeficit(StranLDE stran, decimal odstotek)
     {

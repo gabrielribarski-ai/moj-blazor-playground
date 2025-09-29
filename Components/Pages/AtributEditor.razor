@@ -24,17 +24,23 @@
                 @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
                 {
                     <td>
-                        <InputNumber @bind-Value="atribut.Ocena.VrednostE" class="form-control" />
+                        <InputNumber @bind-Value="atribut.Ocena.VrednostE"
+                                     @bind-Value:after="() => OnValueChanged()"
+                                     class="form-control" />
                     </td>
                 }
                 else
                 {
                     <td>
-                        <InputNumber @bind-Value="atribut.Ocena.VrednostL" class="form-control" />
+                        <InputNumber @bind-Value="atribut.Ocena.VrednostL"
+                                     @bind-Value:after="() => OnValueChanged()"
+                                     class="form-control" />
                     </td>
                     <td>@atribut.StandardnaVrednost</td>
                     <td>
-                        <InputNumber @bind-Value="atribut.Ocena.VrednostD" class="form-control" />
+                        <InputNumber @bind-Value="atribut.Ocena.VrednostD"
+                                     @bind-Value:after="() => OnValueChanged()"
+                                     class="form-control" />
                     </td>
                 }
             </tr>
@@ -43,5 +49,30 @@
 </table>
 
 @code {
+
+
+
     [Parameter] public Segment Segment { get; set; }
+
+    private void OnValueChanged()
+    {
+
+        bool b = false;
+        // preveri, ali ima vsak atribut vsaj eno vneseno vrednost
+        if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+        {
+            b = Segment.Atributi.All(a => a.Ocena.VrednostE.HasValue);
+        }
+        else
+        {
+            b = Segment.Atributi.All(a =>
+                a.Ocena.VrednostL.HasValue &&
+                a.Ocena.VrednostD.HasValue);
+        }
+        if (b)
+            Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
+        StateHasChanged();
+    }
+
+
 }
