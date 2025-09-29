@@ -28,6 +28,8 @@ public class Segment
 
     public IzmerjeniDeficit IzmerjeniDeficit { get; set; }
 
+    public SegmentOcenaSkupaj SegmentOcenaSkupaj { get; set; }
+
     public List<MozniDeficit> MozniDeficitNabor { get; set; } = new();
 
     public IEnumerable<MozniDeficit> OpcijeL =>
@@ -47,7 +49,7 @@ public class Segment
 
 
     // Za gradnjo drevesa v aplikaciji
-    public List<Segment> PodSegment { get; set; } 
+    //public List<Segment> PodSegment { get; set; } 
 
     public bool ImaOcenjevalneAtribute { get; set; }
 

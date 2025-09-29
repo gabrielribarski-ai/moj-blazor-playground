@@ -5,6 +5,8 @@ namespace IzracunInvalidnostiBlazor
 {
     public class AtributOcena
     {
+
+        public int StopnjaIdx { get; set; } = -1;
         public decimal? VrednostL { get; set; }= 0;
         public decimal? VrednostD { get; set; } = 0;
 

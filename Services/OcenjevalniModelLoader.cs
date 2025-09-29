@@ -85,7 +85,7 @@ namespace IzracunInvalidnostiBlazor.Services
                             //Tip = reader.GetString(3),
                             SimetrijaDelaTelesa = dr["LDE"].ToString()=="LD" ? SimetrijaDelaTelesa.LD: SimetrijaDelaTelesa.E,
                             Atributi = new List<Atribut>(),
-                            PodSegment = new List<Segment>(),
+                           // PodSegment = new List<Segment>(),
                             ImaOcenjevalneAtribute = dr["st_kriterijev"].ToString() != "0",
                         });
                     }

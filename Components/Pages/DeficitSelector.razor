@@ -56,31 +56,21 @@ else
 
     private async Task OnLChanged(ChangeEventArgs e)
     {
-        var val = ParseDecimalNullable(e.Value);
-        SelectedLPercent = val; // keep local in sync
-        await SelectedLPercentChanged.InvokeAsync(val);
+        SelectedLPercent = e.Value.AsDecimal();
+        await SelectedLPercentChanged.InvokeAsync(e.Value.AsDecimal());
     }
 
     private async Task OnDChanged(ChangeEventArgs e)
     {
-        var val = ParseDecimalNullable(e.Value);
-        SelectedDPercent = val;
-        await SelectedDPercentChanged.InvokeAsync(val);
+        SelectedDPercent = e.Value.AsDecimal();
+        await SelectedDPercentChanged.InvokeAsync(e.Value.AsDecimal());
     }
 
     private async Task OnEChanged(ChangeEventArgs e)
     {
-        var val = ParseDecimalNullable(e.Value);
-        SelectedEPercent = val;
-        await SelectedEPercentChanged.InvokeAsync(val);
+        SelectedEPercent = e.Value.AsDecimal();
+        await SelectedEPercentChanged.InvokeAsync(e.Value.AsDecimal());
     }
 
-    private static decimal? ParseDecimalNullable(object? raw)
-    {
-        var s = raw?.ToString();
-        if (string.IsNullOrWhiteSpace(s)) return null;
-        return decimal.TryParse(s, System.Globalization.NumberStyles.Any,
-                 System.Globalization.CultureInfo.InvariantCulture, out var d)
-               ? d : null;
-    }
+
 }
