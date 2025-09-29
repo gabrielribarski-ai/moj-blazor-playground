@@ -2,7 +2,6 @@
 @using IzracunInvalidnostiBlazor.Extensions
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
-@using CustomTypeExtensions
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.Extensions.Logging
 @inject NavigationManager NavigationManager
@@ -10,7 +9,6 @@
 @inject ProtectedSessionStorage SessionStorage
 @inject ILogger<Index> Logger
 @rendermode InteractiveServer
-
 
 <h3>Oceni invalidnost</h3>
 
@@ -20,101 +18,79 @@
 }
 else
 {
-    
-    var pot = ocenjevalniModel.GetBreadcrumbPath(ocenjevalniModel?.trenutniSegment?.SegmentId);
-    //var otroci = segmenti.GetSegmentChildren(TrenutniSegment.SegmentId);
-    <div class="trenutna-pot-box">
-        @foreach (var korak in pot)
-        {
-            <span @onclick="@(() => NavigirajNaSegment(korak))"
-                  style="cursor:pointer; text-decoration:underline;"
-                  @key="korak.SegmentId">
-                @korak.Opis
-            </span>
-            @if (!ReferenceEquals(korak, pot.Last()))
-            {
-                <span> &gt; </span>
-            }
-        }
-    </div>
-    
-    
-    @if (ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
-    {
-        <OcenjevalniAtribut Segment="ocenjevalniModel?.trenutniSegment" @key="ocenjevalniModel?.trenutniSegment?.SegmentId" OnOcenaPotrjena="OnSegmentPotrjen" />
-    }
-    
-    @foreach (var podsegment in ocenjevalniModel?.SegmentiZaPrikaz)
-    {
-        <DelTelesa Segment="podsegment"  OnNavigate="NavigirajNaSegment" @key="podsegment.SegmentId" />
-    }
-
-    @if (OcenjeniSegmenti.Any())
-    {
-        <h4>Že ocenjeni segmenti</h4>
-        <ul class="list-group">
-            @foreach (var seg in OcenjeniSegmenti)
-            {
-                var izbrani = seg.MozniDeficitNabor.Where(d => d.JeIzbran).ToList();
-                decimal? l = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.L)?.IzracunaniOdstotek;
-                decimal? d = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.D)?.IzracunaniOdstotek;
-                decimal? e = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.E)?.IzracunaniOdstotek;
-
-                <li class="list-group-item">
-                    <div class="row align-items-center">
-                        <div class="col-3">
-                            <b>@seg.Opis</b>
-                        </div>
-
-                        @if (e.HasValue)
-                        {
-                            <div class="col text-end">
-                                Odstotek: @e.Value.ToString("0.0") %
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="col text-end">
-                                <div class="row">
-                                    <div class="col">L: @(l?.ToString("0.0") ?? "-") %</div>
-                                    <div class="col">D: @(d?.ToString("0.0") ?? "-") %</div>
-                                    <div class="col"><b>@((l ?? 0) + (d ?? 0)).ToString("0.0") %</b></div>
-                                </div>
-                            </div>
-                        }
-
-                        <div class="col-auto text-end">
-                            <button class="btn btn-sm btn-outline-primary" @onclick="() => UrediSegment(seg)">
-                                Vpogled / Popravek
-                            </button>
-                        </div>
-                    </div>
-                </li>
-            }
-
-            <!-- Povzetek vseh segmentov -->
-            @{
-                var total = OcenjeniSegmenti.Sum(seg =>
+    <div class="row">
+        <!-- Leva stran: glavni del -->
+        <div class="col-md-8">
+            <!-- Breadcrumb -->
+            <div class="trenutna-pot-box mb-3">
+                @foreach (var korak in ocenjevalniModel.GetBreadcrumbPath(ocenjevalniModel?.trenutniSegment?.SegmentId))
                 {
-                    var izbrani = seg.MozniDeficitNabor.Where(d => d.JeIzbran).ToList();
-                    var l = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.L)?.IzracunaniOdstotek ?? 0;
-                    var d = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.D)?.IzracunaniOdstotek ?? 0;
-                    var e = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.E)?.IzracunaniOdstotek ?? 0;
-                    return l + d + e;
-                });
+                    <span @onclick="@(() => NavigirajNaSegment(korak))"
+                          style="cursor:pointer; text-decoration:underline;"
+                          @key="korak.SegmentId">
+                        @korak.Opis
+                    </span>
+                    @if (!ReferenceEquals(korak, ocenjevalniModel.GetBreadcrumbPath(ocenjevalniModel?.trenutniSegment?.SegmentId).Last()))
+                    {
+                        <span> &gt; </span>
+                    }
+                }
+            </div>
+
+            <!-- Atributi -->
+            @if (ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
+            {
+                <OcenjevalniAtribut Segment="ocenjevalniModel?.trenutniSegment"
+                                    @key="ocenjevalniModel?.trenutniSegment?.SegmentId"
+                                    OnOcenaPotrjena="OnSegmentPotrjen" />
             }
-            <li class="list-group-item list-group-item-secondary">
-                <div class="d-flex justify-content-between">
-                    <b>Skupaj vseh segmentov:</b>
-                    <span>@total.ToString("0.0") %</span>
+
+            <!-- Podsegmenti -->
+            @foreach (var podsegment in ocenjevalniModel?.SegmentiZaPrikaz)
+            {
+                <DelTelesa Segment="podsegment"
+                           OnNavigate="NavigirajNaSegment"
+                           @key="podsegment.SegmentId" />
+            }
+        </div>
+
+        <!-- Desna stran: že ocenjeni segmenti -->
+        <div class="col-md-4">
+            @if (OcenjeniSegmenti.Any())
+            {
+                <div class="p-3 border rounded bg-light sticky-top" style="top: 1rem;">
+                    <h5>Že ocenjeni segmenti</h5>
+                    <ul class="list-group small">
+                        @foreach (var seg in OcenjeniSegmenti)
+                        {
+                            var izbrani = seg.MozniDeficitNabor.Where(d => d.JeIzbran).ToList();
+                            decimal? l = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.L)?.IzracunaniOdstotek;
+                            decimal? d = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.D)?.IzracunaniOdstotek;
+                            decimal? e = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.E)?.IzracunaniOdstotek;
+
+                            var total = e ?? ((l ?? 0) + (d ?? 0));
+
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><b>@seg.Opis</b></span>
+                                <span>@total.ToString("0.0") %</span>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        @onclick="() => UrediSegment(seg)">
+                                    Vpogled
+                                </button>
+                            </li>
+                        }
+                    </ul>
+
+                    <!-- Povzetek vseh segmentov -->
+                    <div class="mt-3 text-end">
+                        <strong>Skupaj:</strong> @SkupnaInvalidnost.ToString("0.0") %
+                    </div>
                 </div>
-            </li>
-        </ul>
-    }
-
-
-
+            }
+        </div>
+    </div>
 }
+
 
 @code {
     private bool _initialized = false;
