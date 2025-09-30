@@ -87,9 +87,10 @@ namespace CustomTypeExtensions
         }
 
 
+
         public static decimal? AsDecimal(this string inputStr,
-            decimal? default_ = null,
             CultureInfo? culture = null,
+            decimal? default_ = null,
             NumberStyles styles =
                 NumberStyles.AllowLeadingWhite |
                 NumberStyles.AllowTrailingWhite |

@@ -2,6 +2,7 @@
 @using IzracunInvalidnostiBlazor.Models
 @using System.Globalization
 
+
 <label class="form-label">@Stran</label>
 <select class="form-select form-select-sm deficit-selector"
         @bind="SelectedValue"
@@ -20,19 +21,20 @@
     [Parameter] public IEnumerable<MozniDeficit> MozniZaStran { get; set; } = Enumerable.Empty<MozniDeficit>();
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
 
+
+
     // to bo vezano na <select>
+    
     private string? SelectedValue
     {
         get => MozniZaStran.FirstOrDefault(d => d.JeIzbran)
                            ?.IzracunaniOdstotek?.ToString(CultureInfo.InvariantCulture);
         set
         {
-            decimal? parsed = string.IsNullOrWhiteSpace(value)
-                ? null
-                : decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var v) ? v : null;
-
+            decimal? parsed = value.AsDecimal(CultureInfo.InvariantCulture);
             // dvigni event navzgor
             OnSelectionChanged.InvokeAsync((Stran, parsed));
         }
     }
+    
 }

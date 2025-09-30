@@ -32,7 +32,7 @@
     <!-- 3. Dropdowni + debug -->
     @if (Segment.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzracunani, FazaOcenjevanjaEnum.Vpogled))
     {
-
+        <div class="deficit-selector-list">
         @if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD)
         {
             <DeficitSelector @key=@($"{Segment.SegmentId}-L")
@@ -52,7 +52,7 @@
                              MozniZaStran="Segment.MozniDeficitNabor.Where(d => d.StranLDE == StranLDE.E)"
                              OnSelectionChanged="OnDeficitChanged" />
         }
-
+        </div>
         @*if (Segment.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzbrani, FazaOcenjevanjaEnum.Vpogled))*@
         @if (LahkoPotrdi()) 
         {
@@ -78,15 +78,22 @@
                 </ul>
                 <h6>Možni deficiti</h6>
                 <table class="table table-sm">
-                    <thead><tr><th>Primerjava</th><th>Stran</th><th>Deficit %</th><th>Izračunani odstotek</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Stran</th>
+                            <th>Primerjava</th>                           
+                            <th>Deficit %</th>
+                            <th>Izračunani odstotek</th>
+                        </tr>
+                        </thead>
                     <tbody>
                         @foreach (var d in Segment.MozniDeficitNabor)
                         {
                             <tr>
-                                <td>@d.MoznaPrimerjava</td>
                                 <td>@d.StranLDE</td>
-                                <td>@d.Deficit?.ToString("0.00") %</td>
-                                <td>@d.IzracunaniOdstotek?.ToString("0.00")</td>
+                                <td>@d.MoznaPrimerjava</td>                           
+                                <td>@d.Deficit?.ToString("0.0") %</td>
+                                <td>@d.IzracunaniOdstotek?.ToString("0.0")</td>
                             </tr>
                         }
                     </tbody>
@@ -262,7 +269,7 @@
     {
         if (referenca == 0m) return 0m;
         var razlika = Math.Abs(referenca - dejanska);
-        return Math.Round((razlika / referenca) * 100m, 2);
+        return Math.Round((razlika / referenca) * 100m, 1);
     }
 
 
@@ -297,7 +304,7 @@
                 var next = relativne[nextIndex];
                 var span = next.ObmocjeNum.Value - prev.ObmocjeNum.Value;
                 var t = span == 0 ? 1 : (coef - prev.ObmocjeNum.Value) / span;
-                return Math.Round(prev.StopnjaNum + t * (next.StopnjaNum - prev.StopnjaNum), 2);
+                return Math.Round(prev.StopnjaNum + t * (next.StopnjaNum - prev.StopnjaNum), 1);
             }
 
             return relativne[^1].StopnjaNum;
