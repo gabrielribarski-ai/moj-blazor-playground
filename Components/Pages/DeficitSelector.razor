@@ -1,75 +1,30 @@
-﻿@using CustomTypeExtensions
-@using IzracunInvalidnostiBlazor.Models
-@using IzracunInvalidnostiBlazor.Extensions
+﻿@using IzracunInvalidnostiBlazor.Models
+@using System.Globalization
 
-@if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
-{
-    <!-- Enostranski segment -->
-    <label for="selectE">Izberi deficit:</label>
-    <select id="selectE" class="form-select" @onchange="OnEChanged">
-        <option value="">— izberi —</option>
-        @foreach (var def in Segment.OpcijeE)
-        {
-            <option value="@def.IzracunaniOdstotek">
-                @def.IzbiraOpis %
-            </option>
-        }
-    </select>
-}
-else
-{
-    <!-- Dvostranski segment -->
-    <label for="selectL"><b>Leva stran</b></label>
-    <select id="selectL" class="form-select" @onchange="OnLChanged">
-        <option value="">— izberi —</option>
-        @foreach (var def in Segment.OpcijeL)
-        {
-            <option value="@def.IzracunaniOdstotek">
-                @def.IzbiraOpis %
-            </option>
-        }
-    </select>
-
-    <label for="selectD" class="mt-2"><b>Desna stran</b></label>
-    <select id="selectD" class="form-select" @onchange="OnDChanged">
-        <option value="">— izberi —</option>
-        @foreach (var def in Segment.OpcijeD)
-        {
-            <option value="@def.IzracunaniOdstotek">
-                @def.IzbiraOpis %
-            </option>
-        }
-    </select>
-}
+<label class="form-label">@Stran</label>
+<select class="form-select form-select-sm deficit-selector"
+        @onchange="OnChanged">
+    <option value="">— izberi —</option>
+    @foreach (var def in MozniZaStran)
+    {
+        <option value="@def.IzracunaniOdstotek?.ToString(CultureInfo.InvariantCulture)">
+            @def.IzbiraOpis %
+        </option>
+    }
+</select>
 
 @code {
-    [Parameter] public Segment Segment { get; set; }
+    [Parameter] public StranLDE Stran { get; set; }
+    [Parameter] public IEnumerable<MozniDeficit> MozniZaStran { get; set; } = Enumerable.Empty<MozniDeficit>();
+    [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
 
-    [Parameter] public decimal? SelectedLPercent { get; set; }
-    [Parameter] public EventCallback<decimal?> SelectedLPercentChanged { get; set; }
-
-    [Parameter] public decimal? SelectedDPercent { get; set; }
-    [Parameter] public EventCallback<decimal?> SelectedDPercentChanged { get; set; }
-
-    [Parameter] public decimal? SelectedEPercent { get; set; }
-    [Parameter] public EventCallback<decimal?> SelectedEPercentChanged { get; set; }
-
-    private async Task OnLChanged(ChangeEventArgs e)
+    private async Task OnChanged(ChangeEventArgs e)
     {
-        SelectedLPercent = e.Value.AsDecimal();
-        await SelectedLPercentChanged.InvokeAsync(e.Value.AsDecimal());
-    }
+        var raw = e.Value?.ToString();
+        decimal? parsed = string.IsNullOrWhiteSpace(raw)
+            ? null
+            : decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out var v) ? v : null;
 
-    private async Task OnDChanged(ChangeEventArgs e)
-    {
-        SelectedDPercent = e.Value.AsDecimal();
-        await SelectedDPercentChanged.InvokeAsync(e.Value.AsDecimal());
+        await OnSelectionChanged.InvokeAsync((Stran, parsed));
     }
-
-    private async Task OnEChanged(ChangeEventArgs e)
-    {
-        SelectedEPercent = e.Value.AsDecimal();
-        await SelectedEPercentChanged.InvokeAsync(e.Value.AsDecimal());
-    }
-
 }

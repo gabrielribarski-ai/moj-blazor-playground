@@ -4,7 +4,7 @@
     <thead>
         <tr>
             <th>Atribut</th>
-            @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+            @if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
             {
                 <th>E</th>
             }
@@ -21,12 +21,12 @@
         {
             <tr>
                 <td>@atribut.Opis</td>
-                @if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+                @if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
                 {
                     <td>
                         <InputNumber @bind-Value="atribut.Ocena.VrednostE"
                                      @bind-Value:after="() => OnValueChanged()"
-                                     class="form-control" />
+                                     class="form-control input-box-measurement" />
                     </td>
                 }
                 else
@@ -34,13 +34,13 @@
                     <td>
                         <InputNumber @bind-Value="atribut.Ocena.VrednostL"
                                      @bind-Value:after="() => OnValueChanged()"
-                                     class="form-control" />
+                                     class="form-control input-box-measurement" />
                     </td>
                     <td>@atribut.StandardnaVrednost</td>
                     <td>
                         <InputNumber @bind-Value="atribut.Ocena.VrednostD"
                                      @bind-Value:after="() => OnValueChanged()"
-                                     class="form-control" />
+                                     class="form-control input-box-measurement" />
                     </td>
                 }
             </tr>
@@ -61,7 +61,7 @@
 
         bool b = false;
         // preveri, ali ima vsak atribut vsaj eno vneseno vrednost
-        if (Segment.SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
+        if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
         {
             b = Segment.Atributi.All(a => a.Ocena.VrednostE.HasValue);
         }

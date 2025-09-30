@@ -4,13 +4,14 @@ namespace IzracunInvalidnostiBlazor.Models;
     
 
 // L/D/oboje – za stranskost telesa
-public enum SimetrijaDelaTelesa
+public enum SimetrijaTelesaEnum
 {
     LD, E
 }
 
 public enum FazaOcenjevanjaEnum
 {
+    NiOcene,
     Ocenjevanje,
     OceneSoVnesene,
     DeficitiIzracunani,
@@ -19,7 +20,7 @@ public enum FazaOcenjevanjaEnum
 }
 
 
-public class Segment
+public class Segment: ICloneable
 {
     public string SegmentId { get; set; } = string.Empty;
 
@@ -27,7 +28,7 @@ public class Segment
 
     public string SegmentTreePath { get; set; }
     // L/D/oboje – za stranskost telesa
-    public SimetrijaDelaTelesa SimetrijaDelaTelesa { get; set; } 
+    public SimetrijaTelesaEnum SimetrijaTelesa { get; set; } 
 
     // Neposredni nadrejeni segment (če uporabljaš drevesno gradnjo)
     public string NadsegmentId { get; set; }
@@ -37,11 +38,34 @@ public class Segment
 
     public IzmerjeniDeficit IzmerjeniDeficit { get; set; }
 
-    public SegmentOcenaSkupaj SegmentOcenaSkupaj { get; set; }
 
     public List<MozniDeficit> MozniDeficitNabor { get; set; } = new();
 
-    public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; } =FazaOcenjevanjaEnum.Ocenjevanje;
+    public decimal? SkupniOdstotekSegmenta
+    {
+        get
+        {
+            if (MozniDeficitNabor == null || MozniDeficitNabor.Count == 0)
+                return null;
+
+            var izbrani = MozniDeficitNabor.Where(d => d.JeIzbran).ToList();
+            if (izbrani.Count == 0)
+                return null;
+
+            // če je E izbran, vzameš samo njega, sicer sešteješ L+D
+            var e = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.E)?.IzracunaniOdstotek;
+            if (e.HasValue)
+                return Math.Min(e.Value, 100m);
+
+            var l = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.L)?.IzracunaniOdstotek ?? 0m;
+            var d = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.D)?.IzracunaniOdstotek ?? 0m;
+
+            return Math.Min(l + d, 100m);
+        }
+    }
+
+
+    public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; } = FazaOcenjevanjaEnum.NiOcene;
 
     public IEnumerable<MozniDeficit> OpcijeL =>
         MozniDeficitNabor
@@ -69,82 +93,35 @@ public class Segment
         return MozniDeficitNabor.Where(x => x?.IzracunaniOdstotek == odstotek).FirstOrDefault();
     }
 
+    public MozniDeficit? IzbranMozniDeficit(StranLDE stran)
+    {       
+        var a= MozniDeficitNabor
+            .FirstOrDefault(x => x.StranLDE == stran && x.JeIzbran);
+        return a;   
+    }
+
+    public object Clone()
+    {
+        // plitka kopija (shallow copy)
+        return this.MemberwiseClone();
+    }
+    
     public void IzberiMozniDeficit(StranLDE stran, decimal odstotek)
     {
-        var a= MozniDeficitNabor.Where(x => x.IzracunaniOdstotek == odstotek).FirstOrDefault();
+        var a= MozniDeficitNabor.Where(x => x.IzracunaniOdstotek == odstotek && x.StranLDE==stran).FirstOrDefault();
         if (a != null)
         {
             a.JeIzbran = true;
         }
     }
 
-    public void ClearIzberiMozniDeficit()
+    public void ClearIzberiMozniDeficit(StranLDE? stran = null)
     {
-     foreach(var def in MozniDeficitNabor)
+        foreach (var def in MozniDeficitNabor)
         {
             def.JeIzbran = false;
         }
-
     }
-
-
-    public void IzracunajMozneDeficite()
-    {
-        // počisti osnovni nabor
-        MozniDeficitNabor.Clear();
-
-        if (SimetrijaDelaTelesa == SimetrijaDelaTelesa.LD)
-        {
-            foreach (var atribut in Atributi)
-            {
-                if (atribut.TipMeritve == TipMeritveEnum.NUM && atribut.StandardnaVrednost.HasValue)
-                {
-                    if (atribut.Ocena.VrednostL.HasValue)
-                    {
-                        var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostL.Value;
-                        MozniDeficitNabor.Add(new MozniDeficit
-                        {
-                            StranLDE = StranLDE.L,
-                            MoznaPrimerjava = MoznaPrimerjavaEnum.LS,
-                            IzracunaniOdstotek = diff
-                        });
-                    }
-
-                    if (atribut.Ocena.VrednostD.HasValue)
-                    {
-                        var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostD.Value;
-                        MozniDeficitNabor.Add(new MozniDeficit
-                        {
-                            StranLDE = StranLDE.D,
-                            MoznaPrimerjava = MoznaPrimerjavaEnum.DS,
-                            IzracunaniOdstotek = diff
-                        });
-                    }
-                }
-            }
-        }
-        else if (SimetrijaDelaTelesa == SimetrijaDelaTelesa.E)
-        {
-            foreach (var atribut in Atributi)
-            {
-                if (atribut.TipMeritve == TipMeritveEnum.NUM && atribut.StandardnaVrednost.HasValue)
-                {
-                    if (atribut.Ocena.VrednostE.HasValue)
-                    {
-                        var diff = atribut.StandardnaVrednost.Value - atribut.Ocena.VrednostE.Value;
-                        MozniDeficitNabor.Add(new MozniDeficit
-                        {
-                            StranLDE = StranLDE.E,
-                            MoznaPrimerjava = MoznaPrimerjavaEnum.ES,
-                            IzracunaniOdstotek = diff
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-
 
 
 

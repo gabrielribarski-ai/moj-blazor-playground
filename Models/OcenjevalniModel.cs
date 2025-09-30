@@ -5,14 +5,35 @@ namespace IzracunInvalidnostiBlazor.Models
 {
     public class OcenjevalniModel
     {
-        public List<Pogoj> PogojSeznam { get;  set; }
+        public List<Pogoj> PogojSeznam { get; set; }
 
-        public  Pogoj IzbranPogoj{ get; set; }
+        // kateri pogoj je izbran
+        public Pogoj IzbranPogoj { get; set; }
+        //seznam vseh segmentov v modelu    
         public List<Segment> SegmentSeznam { get; set; }
-
+        //trenutni segment na katerem smo oz. ga prikazujemo
         public Segment trenutniSegment { get; set; }
 
+
         public string kjeSeNahajamo { get; set; }
+
+        // Ko ocenimo segment/del telesa, ga dodamo v ta seznam
+        public List<Segment> OcenjenSegmentSeznam { get; set; }
+
+        public decimal? SkupnaOcena
+        {
+            get
+            {
+                if (OcenjenSegmentSeznam == null || OcenjenSegmentSeznam.Count == 0)
+                    return null;
+
+                var vsota = OcenjenSegmentSeznam
+                    .SelectMany(seg => seg.MozniDeficitNabor.Where(d => d.JeIzbran))
+                    .Sum(d => d.IzracunaniOdstotek ?? 0m);
+
+                return Math.Min(vsota, 100m);
+            }
+        }
 
 
         public List<Atribut> AtributiZaPrikaz
@@ -34,7 +55,7 @@ namespace IzracunInvalidnostiBlazor.Models
                 if (SegmentSeznam == null)
                     return null;
                 return SegmentSeznam
-                    .Where(x => x.NadsegmentId==trenutniSegment?.SegmentId)  
+                    .Where(x => x.NadsegmentId == trenutniSegment?.SegmentId)
                     .ToList();
             }
         }
@@ -94,6 +115,14 @@ namespace IzracunInvalidnostiBlazor.Models
             //this.ocenjevalniModel.trenutniSegment = ocenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
         }
 
+        public async Task VpogledVOcenjeniSegment(string ocenjeniSegmentId)
+        {
+            this.trenutniSegment = OcenjenSegmentSeznam.Where(x => x.SegmentId == ocenjeniSegmentId).First();
+
+            //this.ocenjevalniModel.trenutniSegment = ocenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
+        }
+
+
         public Segment? FindSegmentByName(string ime)
         {
             return SegmentSeznam.FirstOrDefault(s => s.Opis.Equals(ime, StringComparison.OrdinalIgnoreCase));
@@ -124,11 +153,15 @@ namespace IzracunInvalidnostiBlazor.Models
         }
 
 
-
-
+        public void DodajMedOcenjeneSegmente(Segment segment)
+        {
+            if (OcenjenSegmentSeznam == null)
+                OcenjenSegmentSeznam = new List<Segment>();
+            var SegmentClone = (Segment)segment.Clone();
+            if (!OcenjenSegmentSeznam.Any(s => s.SegmentId == SegmentClone.SegmentId))  
+                OcenjenSegmentSeznam.Add(SegmentClone);
+        }
     }
-
-
 
 
 }

@@ -91,7 +91,7 @@ public class SegmentService
                     Opis = dr["OPIS"].ToString(),
                     NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
                     //Tip = reader.GetString(3),
-                    SimetrijaDelaTelesa = dr["LDE"].ToString()== "LD" ? SimetrijaDelaTelesa.LD : SimetrijaDelaTelesa.E,
+                    SimetrijaTelesa = dr["LDE"].ToString()== "LD" ? SimetrijaTelesaEnum.LD : SimetrijaTelesaEnum.E,
                     Atributi = new List<Atribut>(),
                    // PodSegment = new List<Segment>(),
                     ImaOcenjevalneAtribute = dr["st_kriterijev"].ToString() != "0",
