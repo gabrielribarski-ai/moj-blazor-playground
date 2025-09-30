@@ -1,9 +1,11 @@
-﻿@using IzracunInvalidnostiBlazor.Models
+﻿@using CustomTypeExtensions
+@using IzracunInvalidnostiBlazor.Models
 @using System.Globalization
 
 <label class="form-label">@Stran</label>
 <select class="form-select form-select-sm deficit-selector"
-        @onchange="OnChanged">
+        @bind="SelectedValue"
+        @bind:event="onchange">
     <option value="">— izberi —</option>
     @foreach (var def in MozniZaStran)
     {
@@ -18,13 +20,19 @@
     [Parameter] public IEnumerable<MozniDeficit> MozniZaStran { get; set; } = Enumerable.Empty<MozniDeficit>();
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
 
-    private async Task OnChanged(ChangeEventArgs e)
+    // to bo vezano na <select>
+    private string? SelectedValue
     {
-        var raw = e.Value?.ToString();
-        decimal? parsed = string.IsNullOrWhiteSpace(raw)
-            ? null
-            : decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out var v) ? v : null;
+        get => MozniZaStran.FirstOrDefault(d => d.JeIzbran)
+                           ?.IzracunaniOdstotek?.ToString(CultureInfo.InvariantCulture);
+        set
+        {
+            decimal? parsed = string.IsNullOrWhiteSpace(value)
+                ? null
+                : decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var v) ? v : null;
 
-        await OnSelectionChanged.InvokeAsync((Stran, parsed));
+            // dvigni event navzgor
+            OnSelectionChanged.InvokeAsync((Stran, parsed));
+        }
     }
 }

@@ -93,7 +93,7 @@ public class Segment: ICloneable
         return MozniDeficitNabor.Where(x => x?.IzracunaniOdstotek == odstotek).FirstOrDefault();
     }
 
-    public MozniDeficit? IzbranMozniDeficit(StranLDE stran)
+    public MozniDeficit? IzbranDeficit(StranLDE stran)
     {       
         var a= MozniDeficitNabor
             .FirstOrDefault(x => x.StranLDE == stran && x.JeIzbran);
@@ -117,7 +117,7 @@ public class Segment: ICloneable
 
     public void ClearIzberiMozniDeficit(StranLDE? stran = null)
     {
-        foreach (var def in MozniDeficitNabor)
+        foreach (var def in MozniDeficitNabor.Where(x=>x.StranLDE==stran))
         {
             def.JeIzbran = false;
         }

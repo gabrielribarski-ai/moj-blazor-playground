@@ -117,31 +117,20 @@
         if (change.val.HasValue)
         {
             Segment.IzberiMozniDeficit(change.stran, change.val.Value); 
-            /*
-            var def = Segment.MozniDeficitNabor
-                .FirstOrDefault(x => x.StranLDE == change.stran && x.IzracunaniOdstotek == change.val.Value);
-            if (def != null)
-                def.JeIzbran = true;*/
         }
-
-        //StateHasChanged();
     }
 
     private bool LahkoPotrdi()
     {
         if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD)
-            return Segment.IzbranMozniDeficit(StranLDE.L) != null &&
-                   Segment.IzbranMozniDeficit(StranLDE.D) != null;
+            return Segment.IzbranDeficit(StranLDE.L) != null &&
+                   Segment.IzbranDeficit(StranLDE.D) != null;
 
         if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
-            return Segment.IzbranMozniDeficit(StranLDE.E) != null;
+            return Segment.IzbranDeficit(StranLDE.E) != null;
 
         return false;
     }
-
-
-
-
 
 
 
