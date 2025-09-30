@@ -74,7 +74,7 @@ else
                                 <span><b>@seg.Opis</b></span>
                                 <span>@total.ToString("0.0") %</span>
                                 <button class="btn btn-sm btn-outline-primary"
-                                        @onclick="() => UrediSegment(seg)">
+                                        @onclick="() => VpogledVOcenjeniSegment(seg)">
                                     Vpogled
                                 </button>
                             </li>
@@ -93,6 +93,12 @@ else
 
 
 @code {
+
+
+
+
+
+
 
     private bool _initialized = false;
     private Segment? TrenutniSegment;
@@ -167,9 +173,11 @@ else
     }
 
 
-    private void UrediSegment(Segment seg)
+    private void VpogledVOcenjeniSegment(Segment seg)
     {
-        TrenutniSegment = seg;
+        seg.FazaOcenjevanja = FazaOcenjevanjaEnum.Vpogled;
+
+        ocenjevalniModel.TrenutniSegmentSet(seg.SegmentId);
     }
 
 

@@ -66,7 +66,7 @@ public class Segment
 
     public MozniDeficit FindMozniDeficit(StranLDE stran, decimal odstotek)
     {
-        return MozniDeficitNabor.Where(x => x.IzracunaniOdstotek == odstotek).FirstOrDefault();
+        return MozniDeficitNabor.Where(x => x?.IzracunaniOdstotek == odstotek).FirstOrDefault();
     }
 
     public void IzberiMozniDeficit(StranLDE stran, decimal odstotek)

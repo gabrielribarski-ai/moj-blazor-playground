@@ -16,10 +16,15 @@
     <h5>@Segment.Opis</h5>
 
     <!-- 1. Vnos atributov -->
-    <AtributEditor Segment="Segment" />
+    <AtributEditor Segment="Segment" FazaChanged="OnFazaChanged" />
+
 
     <!-- 2. Gumb Izračunaj -->
-    @if (Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.OceneSoVnesene)
+    @if (Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.OceneSoVnesene
+        || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzbrani
+        || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzracunani
+        || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.Vpogled
+    )
     @*@if (AliSoOceneVnesene())*@
     {
         <button class="btn btn-primary mt-3" @onclick="IzracunajMozneDeficite">
@@ -28,7 +33,10 @@
     }
 
     <!-- 3. Dropdowni + debug -->
-    @if (Segment.FazaOcenjevanja==FazaOcenjevanjaEnum.DeficitiIzracunani)
+    @if (
+        Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzracunani
+        || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.Vpogled
+        )
     {
         <DeficitSelector Segment="Segment"
                          SelectedLPercent="@SelectedLPercent"
@@ -38,7 +46,10 @@
                          SelectedEPercent="@SelectedEPercent"
                          SelectedEPercentChanged="@((decimal? v) => SelectedEPercent = v)" />
 
-        @if (Segment.FazaOcenjevanja==FazaOcenjevanjaEnum.DeficitiIzracunani)
+        @if (
+             Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzbrani
+            || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.Vpogled
+            )
         {
             <button class="btn btn-success mt-3" @onclick="PotrdiIzracunanDeficit">
                 Potrdi oceno
@@ -158,6 +169,11 @@
 
     private void ToggleDebug() => ShowDebug = !ShowDebug;
 
+    private void OnFazaChanged(FazaOcenjevanjaEnum novaFaza)
+    {
+        Segment.FazaOcenjevanja = novaFaza;
+        StateHasChanged(); // rerender parent
+    }
 
 
     private bool AliSoOceneVnesene()
@@ -175,7 +191,7 @@
         return b;
     }
 
-
+    /*
     private void LahkoPotrdi()
     {
         bool b=Segment.SimetrijaDelaTelesa switch
@@ -187,7 +203,26 @@
         if (b)
             Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzbrani;
     }
+    */
+   
+    
+  private async Task PotrdiIzracunanDeficit()
+  {
+      Segment.ClearIzberiMozniDeficit();
 
+      //if (SelectedLPercent.HasValue)
+            Segment.FindMozniDeficit(StranLDE.L, SelectedLPercent.Value)!.JeIzbran = true;
+      //if (SelectedDPercent.HasValue)
+          Segment.FindMozniDeficit(StranLDE.D, SelectedDPercent.Value)!.JeIzbran = true;
+      //if (SelectedEPercent.HasValue)
+          Segment.FindMozniDeficit(StranLDE.E, SelectedEPercent.Value)!.JeIzbran = true;
+
+      Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzbrani;
+      await OnOcenaPotrjena.InvokeAsync(Segment);
+  }
+
+
+   /*
     private async Task PotrdiIzracunanDeficit()
     {
         Segment.ClearIzberiMozniDeficit();
@@ -202,6 +237,7 @@
         Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzbrani;
         await OnOcenaPotrjena.InvokeAsync(Segment);
     }
+    */
 
 
     private async Task ZakljuciSegment()

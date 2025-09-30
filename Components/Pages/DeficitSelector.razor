@@ -11,7 +11,7 @@
         @foreach (var def in Segment.OpcijeE)
         {
             <option value="@def.IzracunaniOdstotek">
-                @def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %
+                @def.IzbiraOpis %
             </option>
         }
     </select>
@@ -25,7 +25,7 @@ else
         @foreach (var def in Segment.OpcijeL)
         {
             <option value="@def.IzracunaniOdstotek">
-                @def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %
+                @def.IzbiraOpis %
             </option>
         }
     </select>
@@ -36,7 +36,7 @@ else
         @foreach (var def in Segment.OpcijeD)
         {
             <option value="@def.IzracunaniOdstotek">
-                @def.MoznaPrimerjava.GetDescription() : @def.IzracunaniOdstotek?.ToString("0.0") %
+                @def.IzbiraOpis %
             </option>
         }
     </select>
@@ -71,6 +71,5 @@ else
         SelectedEPercent = e.Value.AsDecimal();
         await SelectedEPercentChanged.InvokeAsync(e.Value.AsDecimal());
     }
-
 
 }
