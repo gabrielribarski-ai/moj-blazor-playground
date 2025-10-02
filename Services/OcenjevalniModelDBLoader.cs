@@ -7,10 +7,9 @@ using System.Data;
 
 namespace IzracunInvalidnostiBlazor.Services
 {
-    public class OcenjevalniModelLoader
+    public class OcenjevalniModelDBLoader
     {
         private readonly IConfiguration _config;
-
 
         private readonly string connStr;
         public bool IsPogojiSeznamLoaded { get; private set; }
@@ -19,11 +18,11 @@ namespace IzracunInvalidnostiBlazor.Services
 
         // public OcenjevalniModel ocenjevalniModel { get; set; }
 
-        public OcenjevalniModelLoader() {
+        public OcenjevalniModelDBLoader() {
             OcenjevalniModel = new OcenjevalniModel();
         }
 
-        public OcenjevalniModelLoader(IConfiguration config)
+        public OcenjevalniModelDBLoader(IConfiguration config)
         {
             _config = config;
             this.connStr = _config.GetConnectionString("APL_INVALIDNOST");
@@ -144,24 +143,6 @@ namespace IzracunInvalidnostiBlazor.Services
             }
         }
 
-
-        private async Task<List<T>> QueryAsync<T>(string sql, Func<OracleDataReader, T> map, params OracleParameter[] parameters)
-        {
-            var list = new List<T>();
-            await using var conn = new OracleConnection(connStr);
-            await conn.OpenAsync();
-
-            await using var cmd = new OracleCommand(sql, conn);
-            if (parameters?.Length > 0)
-                cmd.Parameters.AddRange(parameters);
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                list.Add(map(reader));
-            }
-            return list;
-        }
 
         public async Task PreberiAtributeDB_Sync_Segmenti()
         {

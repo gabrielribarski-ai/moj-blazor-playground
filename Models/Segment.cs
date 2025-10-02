@@ -33,6 +33,14 @@ public class Segment: ICloneable
     // Neposredni nadrejeni segment (če uporabljaš drevesno gradnjo)
     public string NadsegmentId { get; set; }
 
+    public decimal? KorekcijaOdstotkaE { get; set; }
+    public decimal? KorekcijaOdstotkaL { get; set; }
+    public decimal? KorekcijaOdstotkaD { get; set; }
+
+    public string KomentarKorekcijaE { get; set; }
+    public string KomentarKorekcijaL { get; set; }
+    public string KomentarKorekcijaD { get; set; }
+
     // Povezani atributi (npr. gibljivost, brazgotina, dolžina)
     public List<Atribut> Atributi { get; set; }
 
@@ -45,22 +53,11 @@ public class Segment: ICloneable
     {
         get
         {
-            if (MozniDeficitNabor == null || MozniDeficitNabor.Count == 0)
-                return null;
+            var e = IzbranDeficitE?.IzracunaniOdstotek ?? 0m;
+            var l = IzbranDeficitL?.IzracunaniOdstotek ?? 0m;
+            var d = IzbranDeficitD?.IzracunaniOdstotek ?? 0m;
 
-            var izbrani = MozniDeficitNabor.Where(d => d.JeIzbran).ToList();
-            if (izbrani.Count == 0)
-                return null;
-
-            // če je E izbran, vzameš samo njega, sicer sešteješ L+D
-            var e = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.E)?.IzracunaniOdstotek;
-            if (e.HasValue)
-                return Math.Min(e.Value, 100m);
-
-            var l = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.L)?.IzracunaniOdstotek ?? 0m;
-            var d = izbrani.FirstOrDefault(d => d.StranLDE == StranLDE.D)?.IzracunaniOdstotek ?? 0m;
-
-            return Math.Min(l + d, 100m);
+            return Math.Min(l + d + e, 100m);
         }
     }
 
@@ -88,36 +85,81 @@ public class Segment: ICloneable
 
     public bool ImaOcenjevalneAtribute { get; set; }
 
-    public MozniDeficit FindMozniDeficit(StranLDE stran, decimal odstotek)
-    {
-        return MozniDeficitNabor.Where(x => x?.IzracunaniOdstotek == odstotek).FirstOrDefault();
-    }
-
     public MozniDeficit? IzbranDeficit(StranLDE stran)
     {       
         var a= MozniDeficitNabor
-            .FirstOrDefault(x => x.StranLDE == stran && x.JeIzbran);
-        return a;   
+            .FirstOrDefault(x => x.StranLDE == stran && x.JeIzbran && x.IzracunaniOdstotek.HasValue);
+        return a;
     }
+
+    public MozniDeficit? IzbranDeficitL =>
+       IzbranDeficit(StranLDE.L);
+
+
+    public MozniDeficit? IzbranDeficitD =>
+       IzbranDeficit(StranLDE.D);
+
+
+    public MozniDeficit? IzbranDeficitE =>
+       IzbranDeficit(StranLDE.E);
 
     public object Clone()
     {
         // plitka kopija (shallow copy)
         return this.MemberwiseClone();
     }
-    
-    public void IzberiMozniDeficit(StranLDE stran, decimal odstotek)
+
+
+    public decimal? GetKorekcija(StranLDE stran) => stran switch
     {
-        var a= MozniDeficitNabor.Where(x => x.IzracunaniOdstotek == odstotek && x.StranLDE==stran).FirstOrDefault();
-        if (a != null)
+        StranLDE.L => KorekcijaOdstotkaL,
+        StranLDE.D => KorekcijaOdstotkaD,
+        StranLDE.E => KorekcijaOdstotkaE,
+        _ => null
+    };
+
+    public void SetKorekcija(StranLDE stran, decimal? value)
+    {
+        switch (stran)
         {
-            a.JeIzbran = true;
+            case StranLDE.L: KorekcijaOdstotkaL = value; break;
+            case StranLDE.D: KorekcijaOdstotkaD = value; break;
+            case StranLDE.E: KorekcijaOdstotkaE = value; break;
         }
     }
 
+    public string? GetKomentar(StranLDE stran) => stran switch
+    {
+        StranLDE.L => KomentarKorekcijaL,
+        StranLDE.D => KomentarKorekcijaD,
+        StranLDE.E => KomentarKorekcijaE,
+        _ => null
+    };
+
+    public void SetKomentar(StranLDE stran, string? value)
+    {
+        switch (stran)
+        {
+            case StranLDE.L: KomentarKorekcijaL = value; break;
+            case StranLDE.D: KomentarKorekcijaD = value; break;
+            case StranLDE.E: KomentarKorekcijaE = value; break;
+        }
+    }
+
+
+    public void IzberiMozniDeficit(StranLDE stran, decimal odstotek)
+    {
+        ClearIzberiMozniDeficit(stran);
+        var def = MozniDeficitNabor
+            .FirstOrDefault(x => x.StranLDE == stran && x.IzracunaniOdstotek == odstotek);
+        if (def != null)
+            def.JeIzbran = true;
+    }
+
+
     public void ClearIzberiMozniDeficit(StranLDE? stran = null)
     {
-        foreach (var def in MozniDeficitNabor.Where(x=>x.StranLDE==stran))
+        foreach (var def in MozniDeficitNabor.Where(x => x.StranLDE == stran))
         {
             def.JeIzbran = false;
         }

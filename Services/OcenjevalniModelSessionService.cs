@@ -7,6 +7,16 @@ namespace IzracunInvalidnostiBlazor.Services
     public class OcenjevalniModelSessionService
     {
         private readonly ProtectedSessionStorage _sessionStorage;
-        private const string Key = "OcenjevalniModel";
     }
+
+        private readonly IConfiguration _config;
+        public OcenjevalniModel OcenjevalniModel { get; set; }
+        public OcenjevalniModelSessionService(IConfiguration config)
+        {
+            _config = config;
+            OcenjevalniModel = new OcenjevalniModel();
+            //ocenjevalniModel = new OcenjevalniModel();
+        }
+    }
+
 }

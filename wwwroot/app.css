@@ -60,6 +60,22 @@ h1:focus {
 }
 
 /************************************************************************/
+
+.deficit-selector-list .d-flex {
+    align-items: center;
+}
+
+.deficit-selector-list .btn-link {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.deficit-selector-list .deficit-selector-wrapper {
+    display: inline-block; /* ne naj prekriva cele širine */
+    max-width: 100%;
+}
+
 .segment-box.listni {
     background-color: #f9f9f9;
     border-left: 4px solid #0078d4;
@@ -85,3 +101,129 @@ select.form-select {
     font-size: 0.8rem;
     padding: 0.2rem 0.4rem;
 }
+
+.segment-box {
+    font-size: 0.85rem;
+}
+
+
+
+.stran-container {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Leva stran – rahlo zelenkast odtenek */
+.stran-l {
+    background-color: #f3f9f3;
+}
+
+/* Desna stran – rahlo modrikast odtenek */
+.stran-d {
+    background-color: #f3f6fa;
+}
+
+/* Naslov naj bo jasen */
+.stran-container h4 {
+    margin-top: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.deficit-block {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+    /* Leva stran – rahlo zelenkast odtenek */
+    .deficit-block.stran-l {
+        background-color: #f3f9f3;
+    }
+
+    /* Desna stran – rahlo modrikast odtenek */
+    .deficit-block.stran-d {
+        background-color: #f3f6fa;
+    }
+
+    /* Enostranska – nevtralno sivkasto */
+    .deficit-block.stran-e {
+        background-color: #f8f8f8;
+}
+
+button.btn-izracunaj {
+    margin-bottom: 1rem; /* ali margin-top pri boxu */
+}
+
+/* trenutna-pot-box*/
+.trenutna-pot-box {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+}
+
+/* Breadcrumb èipke – manj zaobljene, kompaktnejše */
+.trenutna-pot-box .crumb {
+    display: inline-block;
+    padding: 0.15rem 0.4rem;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 2px; /* manj zaobljeno */
+    cursor: pointer;
+    color: #333;
+    font-size: 0.8rem;
+    transition: background-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    margin-right: 0.2rem; /* manjši razmik */
+}
+
+    .trenutna-pot-box .crumb:hover {
+        background-color: #e9f2fb;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+        transform: translateY(-1px);
+        color: #0d6efd;
+    }
+
+.trenutna-pot-box .separator {
+    color: #999;
+    margin: 0 0.2rem;
+}
+
+/* Podsegment kartice – manj zaobljene, manjši razmik */
+.podsegment-card {
+    border-radius: 3px; /* manj zaobljeno */
+    margin-bottom: 0.35rem; /* manjši vertikalni razmik */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    cursor: pointer;
+}
+
+    .podsegment-card .card-body {
+        padding: 0.3rem 0.5rem; /* kompaktnejši padding */
+        font-size: 0.85rem;
+    }
+
+    .podsegment-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        background-color: #f8fbff;
+        border-color: #1b6ec2;
+    }
+
+
+.trenutna-pot-box .crumb.active {
+    background-color: #0d6efd; /* modro ozadje */
+    color: #fff; /* bel tekst */
+    font-weight: 600; /* poudarjeno */
+    cursor: default; /* ni veè klikabilen */
+    box-shadow: none; /* brez hover sence */
+}
+
+    .trenutna-pot-box .crumb.active:hover {
+        transform: none; /* naj se ne premika */
+        box-shadow: none;
+        background-color: #0d6efd; /* ostane enako */
+    }

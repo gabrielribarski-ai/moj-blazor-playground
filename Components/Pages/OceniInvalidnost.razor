@@ -5,12 +5,12 @@
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.Extensions.Logging
 @inject NavigationManager NavigationManager
-@inject OcenjevalniModelLoader ocenjevalniModelLoader
+@inject OcenjevalniModelDBLoader ocenjevalniModelLoader
 @inject ProtectedSessionStorage SessionStorage
 @inject ILogger<Index> Logger
 @rendermode InteractiveServer
 
-<h3>Oceni invalidnost</h3>
+<h6>Izberi del telesa za ocenjevanje</h6>
 
 @if (ocenjevalniModel?.trenutniSegment == null)
 {
@@ -23,19 +23,23 @@ else
         <div class="col-md-6 small-font">
             <!-- Breadcrumb -->
             <div class="trenutna-pot-box mb-3">
-                @foreach (var korak in ocenjevalniModel.GetBreadcrumbPath(ocenjevalniModel?.trenutniSegment?.SegmentId))
+                @foreach (var korak in ocenjevalniModel.BreadcrumbPath)
                 {
-                    <span @onclick="@(() => NavigirajNaSegment(korak))"
-                          style="cursor:pointer; text-decoration:underline;"
+                    var isLast = korak == ocenjevalniModel.BreadcrumbPath.Last();
+
+                    <span class="crumb @(isLast ? "active" : "")"
+                          @onclick="@(() => NavigirajNaSegment(korak))"
                           @key="korak.SegmentId">
                         @korak.Opis
                     </span>
-                    @if (!ReferenceEquals(korak, ocenjevalniModel.GetBreadcrumbPath(ocenjevalniModel?.trenutniSegment?.SegmentId).Last()))
+
+                    @if (!isLast)
                     {
-                        <span> &gt; </span>
+                        <span class="separator">🞂</span>
                     }
                 }
             </div>
+
 
             <!-- Atributi -->
             @if (ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
@@ -46,12 +50,19 @@ else
             }
 
             <!-- Podsegmenti -->
-            @foreach (var podsegment in ocenjevalniModel?.SegmentiZaPrikaz)
-            {
-                <DelTelesa Segment="podsegment"
-                           OnNavigate="NavigirajNaSegment"
-                           @key="podsegment.SegmentId" />
-            }
+            <div class="podsegment-list mb-4">
+                @foreach (var seg in ocenjevalniModel?.SegmentiZaPrikaz)
+                {
+                    <div class="card podsegment-card mb-2"
+                         @onclick="() => NavigirajNaSegment(seg)"
+                         @key="seg.SegmentId">
+                        <div class="card-body d-flex align-items-center">
+                            <i class="bi bi-diagram-3 me-2 text-primary"></i>
+                            <span>@seg.Opis</span>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
 
         <!-- Desna stran: že ocenjeni segmenti -->
@@ -97,26 +108,6 @@ else
 
     private List<Segment> BreadcrumbPath = new();
 
-    private void IzberiSegment(Segment seg)
-    {
-        TrenutniSegment = seg;
-        // posodobi breadcrumb pot
-        BreadcrumbPath = BuildBreadcrumb(seg);
-    }
-
-    private List<Segment> BuildBreadcrumb(Segment seg)
-    {
-        var path = new List<Segment>();
-        var current = seg;
-        while (current != null)
-        {
-            path.Insert(0, current);
-            // če imaš referenco na nadsegment, jo uporabi
-            current = null; // TODO: poveži z modelom
-        }
-        return path;
-    }
-
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -128,23 +119,11 @@ else
     }
 
 
-
     private void OnSegmentPotrjen(Segment seg)
     {
         ocenjevalniModel.DodajMedOcenjeneSegmente(seg); 
         ocenjevalniModel.TrenutniSegmentSet(ocenjevalniModel.GetRootSegment().SegmentId);
-
-        /*
-        var idx = OcenjeniSegmenti.FindIndex(s => s.SegmentId == seg.SegmentId);
-        if (idx >= 0)
-            OcenjeniSegmenti[idx] = seg;
-        else
-            OcenjeniSegmenti.Add(seg);
-
-        ocenjevalniModel.TrenutniSegmentSet(ocenjevalniModel.GetRootSegment().SegmentId);
-        */
     }
-
 
 
     private async Task NavigirajNaSegment(Segment segment)
@@ -159,13 +138,6 @@ else
         //StateHasChanged();
     }
 
-
-    private void IzracunajSkupnoInvalidnost()
-    {
-        // 🔹 tukaj lahko uporabiš svojo medicinsko formulo (zaenkrat navaden seštevek)
-        SkupnaInvalidnost = OcenjeniSegmenti
-            .Sum(s => s.MozniDeficitNabor?.Max(d => d.IzracunaniOdstotek) ?? 0);
-    }
 
 
     private void VpogledVOcenjeniSegment(Segment seg)

@@ -11,7 +11,7 @@
     <!-- 1. Vnos atributov -->
 <div class="p-3 border rounded">
 
-    <h5>@Segment.Opis</h5>
+    <span class="segment-atribut-title">@Segment.Opis</span>
 
     <!-- 1. Vnos atributov -->
     <AtributEditor Segment="Segment" FazaChanged="OnFazaChanged" />
@@ -24,34 +24,29 @@
     )
     @*@if (AliSoOceneVnesene())*@
     {
-        <button class="btn btn-primary mt-3" @onclick="IzracunajMozneDeficite">
-            Izračunaj
-        </button>
+        <div>
+            <button class="btn btn-primary mb-3 btn-izracunaj" @onclick="IzracunajMozneDeficite">
+                Izračunaj
+            </button>
+        </div>
     }
 
     <!-- 3. Dropdowni + debug -->
     @if (Segment.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzracunani, FazaOcenjevanjaEnum.Vpogled))
     {
         <div class="deficit-selector-list">
-        @if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD)
-        {
-            <DeficitSelector @key=@($"{Segment.SegmentId}-L")
-                             Stran="StranLDE.L"
-                             MozniZaStran="Segment.MozniDeficitNabor.Where(d => d.StranLDE == StranLDE.L)"
-                             OnSelectionChanged="OnDeficitChanged" />
+            @{
+                var strani = Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD
+                ? new[] { StranLDE.L, StranLDE.D }
+                : new[] { StranLDE.E };
+            }
 
-            <DeficitSelector @key=@($"{Segment.SegmentId}-D")
-                             Stran="StranLDE.D"
-                             MozniZaStran="Segment.MozniDeficitNabor.Where(d => d.StranLDE == StranLDE.D)"
-                             OnSelectionChanged="OnDeficitChanged" />
-        }
-        else
-        {
-            <DeficitSelector @key=@($"{Segment.SegmentId}-E")
-                             Stran="StranLDE.E"
-                             MozniZaStran="Segment.MozniDeficitNabor.Where(d => d.StranLDE == StranLDE.E)"
-                             OnSelectionChanged="OnDeficitChanged" />
-        }
+            @foreach (var stran in strani)
+            {
+                <DeficitWithCorrection Segment="Segment"
+                                       Stran="@stran"
+                                       OnSelectionChanged="OnDeficitChanged" />
+            }
         </div>
         @*if (Segment.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzbrani, FazaOcenjevanjaEnum.Vpogled))*@
         @if (LahkoPotrdi()) 
@@ -114,6 +109,9 @@
     private decimal? SelectedDPercent;
     private decimal? SelectedEPercent;
 
+    private bool PrikaziKorekcijoL;
+    private bool PrikaziKorekcijoD;
+    private bool PrikaziKorekcijoE;
 
     private void OnDeficitChanged((StranLDE stran, decimal? val) change)
     {
@@ -130,16 +128,24 @@
     private bool LahkoPotrdi()
     {
         if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD)
-            return Segment.IzbranDeficit(StranLDE.L) != null &&
-                   Segment.IzbranDeficit(StranLDE.D) != null;
+            return Segment.IzbranDeficitL != null &&
+                   Segment.IzbranDeficitD != null;
 
         if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
-            return Segment.IzbranDeficit(StranLDE.E) != null;
+            return Segment.IzbranDeficitE != null;
 
         return false;
     }
 
-
+    private void ToggleKorekcija(StranLDE stran)
+    {
+        switch (stran)
+        {
+            case StranLDE.L: PrikaziKorekcijoL = !PrikaziKorekcijoL; break;
+            case StranLDE.D: PrikaziKorekcijoD = !PrikaziKorekcijoD; break;
+            case StranLDE.E: PrikaziKorekcijoE = !PrikaziKorekcijoE; break;
+        }
+    }
 
     private void IzracunajMozneDeficite()
     {

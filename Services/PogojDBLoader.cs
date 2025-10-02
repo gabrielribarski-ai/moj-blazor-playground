@@ -3,23 +3,18 @@ using System.Data;
 
 
 namespace IzracunInvalidnostiBlazor;
-public class PogojService 
+public class PogojDBLoader 
 {
     private readonly IConfiguration _config;
     public List<Pogoj>? Seznam;
 
 
-    public PogojService(IConfiguration config)
+    public PogojDBLoader(IConfiguration config)
     {
         _config = config;
     }
-    private readonly SegmentService _segmentService;
 
-    public PogojService(IConfiguration config, SegmentService segmentService)
-    {
-        _config = config;
-        _segmentService = segmentService;
-    }
+
 
     public async Task PreberiPogoje()
     {

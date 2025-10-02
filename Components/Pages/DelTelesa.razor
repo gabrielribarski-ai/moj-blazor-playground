@@ -5,7 +5,7 @@
 
 <div class="segment-box" @onclick="@(() => OnNavigate.InvokeAsync(Segment))"
      style="cursor:pointer;">
-    <h4>@Segment.Opis</h4>
+    @Segment.Opis
 </div>
 
 @code {

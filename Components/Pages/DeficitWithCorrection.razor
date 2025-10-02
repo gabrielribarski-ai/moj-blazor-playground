@@ -1,0 +1,68 @@
+﻿@* filename: DeficitWithCorrection.razor *@
+@using IzracunInvalidnostiBlazor.Models
+
+<div class="deficit-block @CssClassForStran(Stran)">
+    <h6 class="fw-bold">@NaslovZaStran(Stran)</h6>
+
+    <div class="d-flex align-items-center gap-2">
+        <DeficitSelector @key=@($"{Segment.SegmentId}-{Stran}")
+                         Stran="Stran"
+                         MozniZaStran="Segment.MozniDeficitNabor.Where(d => d.StranLDE == Stran)"
+                         OnSelectionChanged="OnSelectionChanged" />
+
+        @if (IzbranDeficit != null)
+        {
+            <button class="btn btn-link btn-sm p-0 ms-1 text-secondary"
+                    title="Popravi"
+                    @onclick="ToggleKorekcija">
+                ✎
+            </button>
+        }
+    </div>
+
+    @if (PrikaziKorekcijo && IzbranDeficit != null)
+    {
+        <div class="mt-2 ms-4 p-2 border rounded bg-light">
+            <input type="number" step="0.1" min="0" max="100"
+                   class="form-control form-control-sm mb-2"
+                   placeholder="Ročni odstotek"
+                   value="@Segment.GetKorekcija(Stran)"
+                   @oninput="e => Segment.SetKorekcija(Stran, ParseDecimal(e.Value?.ToString()))" />
+
+            <textarea class="form-control form-control-sm"
+                      placeholder="Komentar"
+                      value="@Segment.GetKomentar(Stran)"
+                      @oninput="e => Segment.SetKomentar(Stran, e.Value?.ToString())"></textarea>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Segment Segment { get; set; } = default!;
+    [Parameter] public StranLDE Stran { get; set; }
+    [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
+
+    private bool PrikaziKorekcijo { get; set; }
+    private void ToggleKorekcija() => PrikaziKorekcijo = !PrikaziKorekcijo;
+
+    private MozniDeficit? IzbranDeficit => Segment.IzbranDeficit(Stran);
+
+    private static decimal? ParseDecimal(string? input)
+        => decimal.TryParse(input, out var result) ? result : null;
+
+    private string CssClassForStran(StranLDE stran) => stran switch
+    {
+        StranLDE.L => "stran-l",
+        StranLDE.D => "stran-d",
+        StranLDE.E => "stran-e",
+        _ => ""
+    };
+
+    private string NaslovZaStran(StranLDE stran) => stran switch
+    {
+        StranLDE.L => "Leva stran (L)",
+        StranLDE.D => "Desna stran (D)",
+        StranLDE.E => "Enostransko (E)",
+        _ => ""
+    };
+}

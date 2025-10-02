@@ -1,0 +1,44 @@
+# Build output
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Paketne mape
+packages/
+*.nupkg
+
+# Publish output
+wwwroot/dist/
+wwwroot/node_modules/
+node_modules/
+
+# Test results
+TestResult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# Backup files
+*.bak
+*.tmp
+*.swp

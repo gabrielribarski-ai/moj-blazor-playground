@@ -14,9 +14,6 @@ namespace IzracunInvalidnostiBlazor.Models
         //trenutni segment na katerem smo oz. ga prikazujemo
         public Segment trenutniSegment { get; set; }
 
-
-        public string kjeSeNahajamo { get; set; }
-
         // Ko ocenimo segment/del telesa, ga dodamo v ta seznam
         public List<Segment> OcenjenSegmentSeznam { get; set; }
 
@@ -85,19 +82,23 @@ namespace IzracunInvalidnostiBlazor.Models
             return GetSegmentChildren(parent.SegmentId);
         }
 
-        public List<Segment> GetBreadcrumbPath(string segmentId)
+public List<Segment> BreadcrumbPath
+{
+    get
+    {
+        var path = new List<Segment>();
+        var current = trenutniSegment;
+
+        while (current != null)
         {
-            var path = new List<Segment>();
-            var current = SegmentSeznam?.FirstOrDefault(s => s.SegmentId == segmentId);
-
-            while (current != null)
-            {
-                path.Insert(0, current);
-                current = GetParentSegment(current.SegmentId);
-            }
-
-            return path;
+            path.Insert(0, current);
+            current = GetParentSegment(current.SegmentId);
         }
+
+        return path;
+    }
+}
+
 
 
         public async Task IzbranPogojSet(string pogojId)

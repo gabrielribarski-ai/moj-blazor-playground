@@ -1,6 +1,6 @@
 ﻿@using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
-@inject OcenjevalniModelLoader ocenjevalniModelLoader
+@inject OcenjevalniModelDBLoader ocenjevalniModelLoader
 
 
 
@@ -72,6 +72,6 @@ else
     private void UpdateView()
     {
         children = ocenjevalniModel.GetSegmentChildren(currentSegment!.SegmentId);
-        breadcrumb = ocenjevalniModel.GetBreadcrumbPath(currentSegment.SegmentId);
+        breadcrumb = ocenjevalniModel.BreadcrumbPath; // FIX: BreadcrumbPath is a property, not a method
     }
 }
