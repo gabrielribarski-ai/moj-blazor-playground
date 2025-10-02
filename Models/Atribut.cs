@@ -3,9 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IzracunInvalidnostiBlazor
 {
-    public enum TipMeritveEnum { NUM, BOOL };
 
-    public enum StranLDE  { L, D, E }
 
     public class Atribut
     {

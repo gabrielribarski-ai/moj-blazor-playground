@@ -4,7 +4,7 @@ namespace IzracunInvalidnostiBlazor.Models
 {
     public class MozniDeficit
     {
-        public MoznaPrimerjavaEnum MoznaPrimerjava { get; set; }
+        public Enum MoznaPrimerjava { get; set; }
         public decimal? Deficit { get; set; }
 
         public string IzbiraOpis { get; set; }

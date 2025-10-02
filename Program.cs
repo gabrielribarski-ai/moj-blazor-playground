@@ -36,7 +36,8 @@ if (builder.Environment.IsDevelopment())
 }*/
 
 builder.Services.AddScoped<OcenjevalniModelDBLoader>();
-builder.Services.AddScoped<OcenjevalniModelSessionService>();
+builder.Services.AddScoped<UserSessionStorageService>();
+builder.Services.AddScoped<LoaderService>();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 var app = builder.Build();

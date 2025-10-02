@@ -1,24 +1,71 @@
 ﻿@inherits LayoutComponentBase
+@using IzracunInvalidnostiBlazor.Models
+@using IzracunInvalidnostiBlazor.Services
+@inject UserSessionStorageService SessionService
+@inject NavigationManager Nav
+@inject LoaderService Loader
 
-<div class="page">
-    <!--
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-    -->
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<div class="app-shell @(Loader.IsVisible ? "has-loader" : null)">
+    <div class="header-wrap">
+        <div class="app-header">
+            <img src="images/generali-logo-big.svg" alt="Generali" class="logo" />
+            <div class="user-info">
+                @if (user != null)
+                {
+                    <span>Prijavljen: &nbsp;</span>
+                    <span>@user.Ime @user.Priimek </span>
+                    <span>@user.CasPrijave.ToShortTimeString()</span>
+                    <button class="btn-logout" @onclick="Logout">Odjava</button>
+                }
+            </div>
         </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+        <!-- Loader je vedno prisoten -->
+        <div class="loading-bar @(Loader.IsVisible ? "show" : "hide")">
+            <span>@Loader.Message</span>
+            <div class="dots"><span>.</span><span>.</span><span>.</span></div>
+        </div>
+    </div>
+
+    <article class="content">
+        @Body
+    </article>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+@code {
+
+    private PrijavljenUporabnik? user;
+
+    protected override void OnInitialized()
+    {
+        Loader.OnChange += StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            user = await Loader.RunWithLoader("Pridobivam podatke uporabnika...", async () =>
+            {
+                return await SessionService.LoadUserAsync();
+            });
+
+            Loader.Show("BLABLABALBA");
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        Loader.OnChange -= StateHasChanged;
+    }
+
+    private async Task Logout()
+    {
+        await Loader.RunWithLoader("Odjavljam uporabnika...", async () =>
+        {
+            await SessionService.ClearUserAsync();
+            Nav.NavigateTo("/", forceLoad: true);
+        });
+    }
+}

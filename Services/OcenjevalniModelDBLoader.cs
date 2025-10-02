@@ -1,4 +1,4 @@
-﻿//file: OcenjevalniModelLoader.cs
+﻿// file: OcenjevalniModelDBLoader.cs
 using CustomTypeExtensions;
 using IzracunInvalidnostiBlazor.Models;  // Atribut, StopnjaDeficita
 using Microsoft.Extensions.Configuration;
@@ -9,185 +9,152 @@ namespace IzracunInvalidnostiBlazor.Services
 {
     public class OcenjevalniModelDBLoader
     {
-        private readonly IConfiguration _config;
-
         private readonly string connStr;
-        public bool IsPogojiSeznamLoaded { get; private set; }
-
-        public OcenjevalniModel OcenjevalniModel { get; set; }
-
-        // public OcenjevalniModel ocenjevalniModel { get; set; }
-
-        public OcenjevalniModelDBLoader() {
-            OcenjevalniModel = new OcenjevalniModel();
-        }
 
         public OcenjevalniModelDBLoader(IConfiguration config)
         {
-            _config = config;
-            this.connStr = _config.GetConnectionString("APL_INVALIDNOST");
-            OcenjevalniModel = new OcenjevalniModel();
-            //ocenjevalniModel = new OcenjevalniModel();
+            connStr = config.GetConnectionString("APL_INVALIDNOST");
         }
 
-        public async Task LoadPogojSeznamFromDB()
+        public async Task LoadPogojSeznamAsync(OcenjevalniModel model)
         {
-            if (IsPogojiSeznamLoaded) return; // 👈 prepreči dvojni query
-            OcenjevalniModel.PogojSeznam = new List<Pogoj>();
+            if (model.PogojSeznam?.Any() == true) return; // prepreči dvojni query
+            model.PogojSeznam = new List<Pogoj>();
 
-            using (var conn = new OracleConnection(this.connStr))
+            await using var conn = new OracleConnection(connStr);
+            await conn.OpenAsync();
+
+            const string sql = "SELECT ID, SIFRA, OPIS FROM B1_POGOJI";
+            await using var cmd = new OracleCommand(sql, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
             {
-                await conn.OpenAsync();
-                const string sql = "SELECT ID, SIFRA, OPIS FROM B1_POGOJI";
-                await using var cmd = new OracleCommand(sql, conn);
-                await using var reader = await cmd.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
+                model.PogojSeznam.Add(new Pogoj
                 {
-                    OcenjevalniModel.PogojSeznam.Add(new Pogoj
-                    {
-                        PogojId = reader["ID"].ToString(),
-                        Sifra = reader["SIFRA"].ToString(),
-                        Opis = reader["OPIS"].ToString()
-                    });
-                }
+                    PogojId = reader["ID"].ToString(),
+                    Sifra = reader["SIFRA"].ToString(),
+                    Opis = reader["OPIS"].ToString()
+                });
             }
-            IsPogojiSeznamLoaded = true; // 👈 označi kot naloženo
         }
 
-
-        public async Task LoadSegmentSeznamFromDB()
+        public async Task LoadSegmentSeznamAsync(OcenjevalniModel model)
         {
-            OcenjevalniModel.SegmentSeznam = new List<Segment>();
-            using (var conn = new OracleConnection(this.connStr))
+            model.SegmentSeznam = new List<Segment>();
+
+            await using var conn = new OracleConnection(connStr);
+            await conn.OpenAsync();
+
+            const string sql = "SELECT * FROM VW_B1_SEGMENT";
+            await using var cmd = new OracleCommand(sql, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            var dt = new DataTable();
+            dt.Load(reader);
+
+            foreach (DataRow dr in dt.Rows)
             {
-                conn.Open();
-                string q = "";
-                q += "SELECT * FROM VW_B1_SEGMENT";
-
-                using (OracleCommand cmd = new OracleCommand(q, conn))
+                model.SegmentSeznam.Add(new Segment
                 {
-                    DataTable dt = new DataTable();
-                    using (OracleDataReader reader = cmd.ExecuteReader())
-                    {
-                        dt.Load(reader, LoadOption.PreserveChanges);
-                    }
-                    foreach (DataRow dr in dt.Rows)
-                    {
-                        OcenjevalniModel.SegmentSeznam.Add(new Segment
-                        {
-                            SegmentId = dr["SEGMENT_ID"].ToString(),
-                            Opis = dr["OPIS"].ToString(),
-                            SegmentTreePath = dr["Segment_Tree_Path"].ToString(),
-                            NadsegmentId = (dr["NADREJENI_ID"].ToString() == "" ? null : dr["NADREJENI_ID"].ToString()),
-                            //Tip = reader.GetString(3),
-                            SimetrijaTelesa = dr["LDE"].ToString()=="LD" ? SimetrijaTelesaEnum.LD: SimetrijaTelesaEnum.E,
-                            Atributi = new List<Atribut>(),
-                           // PodSegment = new List<Segment>(),
-                            ImaOcenjevalneAtribute = dr["st_kriterijev"].ToString() != "0",
-                        });
-                    }
-                }
+                    SegmentId = dr["SEGMENT_ID"].ToString(),
+                    Opis = dr["OPIS"].ToString(),
+                    SegmentTreePath = dr["Segment_Tree_Path"].ToString(),
+                    NadsegmentId = string.IsNullOrEmpty(dr["NADREJENI_ID"].ToString()) ? null : dr["NADREJENI_ID"].ToString(),
+                    SimetrijaTelesa = dr["LDE"].ToString() == "LD" ? SimetrijaTelesaEnum.LD : SimetrijaTelesaEnum.E,
+                    Atributi = new List<Atribut>(),
+                    ImaOcenjevalneAtribute = dr["st_kriterijev"].ToString() != "0",
+                });
             }
-            await PreberiAtributeDB_Sync_Segmenti();
+
+            await LoadAtributeAsync(model);
         }
 
-
-        public Atribut? FindAtributById(string atributId)
+        public Atribut? FindAtributById(OcenjevalniModel model, string atributId)
         {
-            return this.OcenjevalniModel.SegmentSeznam
+            return model.SegmentSeznam
                 .Where(s => s.ImaOcenjevalneAtribute && s.Atributi != null)
                 .SelectMany(s => s.Atributi)
                 .FirstOrDefault(a => a.AtributId == atributId);
         }
 
-
-        public async Task PreberiStopnjeDB_Sync(string pogojId)
+        public async Task LoadStopnjeAsync(OcenjevalniModel model, string pogojId)
         {
-            using (var conn = new OracleConnection(connStr))
+            await using var conn = new OracleConnection(connStr);
+            await conn.OpenAsync();
+
+            const string q = "select * from vw_b1_atr_stopnja where pogoj_id=:pogoj_id";
+            await using var cmd = new OracleCommand(q, conn);
+            cmd.Parameters.Add(new OracleParameter("pogoj_id", OracleDbType.Varchar2, pogojId, ParameterDirection.Input));
+
+            var dt = new DataTable();
+            using (var reader = await cmd.ExecuteReaderAsync())
             {
-                conn.Open();
-                string q = "select * from vw_b1_atr_stopnja where pogoj_id=:pogoj_id";
+                dt.Load(reader, LoadOption.PreserveChanges);
+            }
 
-                using (OracleCommand cmd = new OracleCommand(q, conn))
+            foreach (DataRow dr in dt.Rows)
+            {
+                string atribut_id = dr["atribut_id"].ToString();
+                var atr = FindAtributById(model, atribut_id);
+                if (atr != null)
                 {
-                    cmd.Parameters.Add(new OracleParameter("pogoj_id", OracleDbType.Varchar2, pogojId, ParameterDirection.Input));
-
-                    DataTable dt = new DataTable();
-                    using (OracleDataReader reader = cmd.ExecuteReader())
+                    StopnjaDeficita stopnja = new()
                     {
-                        dt.Load(reader, LoadOption.PreserveChanges);
-                    }
-
-                    foreach (DataRow dr in dt.Rows)
-                    {
-                        string atribut_id = dr["atribut_id"].ToString();
-                        var atr = FindAtributById(atribut_id);
-                        if (atr != null)
-                        {
-                            StopnjaDeficita stopnja = new();
-                            stopnja.PogojAtributId = dr["pogoj_atribut_id"].ToString();
-                            stopnja.ZapSt = dr["zap_st"].ToInt().Value;
-                            stopnja.OdstotekFR = dr["fiksni_odstotek"].ToString() == "N" ? OdstotekFR.R : OdstotekFR.F;
-                            stopnja.StopnjaOpis = dr["stopnja_opis"].ToString();
-                            stopnja.ObmocjeNum = dr["obmocje_num"].AsDecimal();
-                            stopnja.StopnjaNum = dr["stopnja_num"].ToInt().Value;
-                            stopnja.TockaOpis = dr["tocka_opis"].ToString();
-                            stopnja.Operator = dr["operator_1"].ToString();
-                            stopnja.Operator = dr["operator_1"].ToString();
-                            atr.Stopnje.Add(stopnja);
-                        }
-                    }
+                        PogojAtributId = dr["pogoj_atribut_id"].ToString(),
+                        ZapSt = dr["zap_st"].ToInt().Value,
+                        OdstotekFR = dr["fiksni_odstotek"].ToString() == "N" ? OdstotekFR.R : OdstotekFR.F,
+                        StopnjaOpis = dr["stopnja_opis"].ToString(),
+                        ObmocjeNum = dr["obmocje_num"].AsDecimal(),
+                        StopnjaNum = dr["stopnja_num"].ToInt().Value,
+                        TockaOpis = dr["tocka_opis"].ToString(),
+                        Operator = dr["operator_1"].ToString()
+                    };
+                    atr.Stopnje.Add(stopnja);
                 }
             }
         }
 
-
-        public async Task PreberiAtributeDB_Sync_Segmenti()
+        public async Task LoadAtributeAsync(OcenjevalniModel model)
         {
-            using (var conn = new OracleConnection(connStr))
+            await using var conn = new OracleConnection(connStr);
+            await conn.OpenAsync();
+
+            const string q = "SELECT ID, SEGMENT_ID, STANDARD, ENOTA, TIP_MERITVE, MOZNA_PRIMERJAVA, OPIS from B1_ATRIBUTI";
+            await using var cmd = new OracleCommand(q, conn);
+
+            var dt = new DataTable();
+            using (var reader = await cmd.ExecuteReaderAsync())
             {
-                conn.Open();
-                string q = "SELECT ID, SEGMENT_ID, STANDARD, ENOTA, TIP_MERITVE, MOZNA_PRIMERJAVA, OPIS from B1_ATRIBUTI ";
+                dt.Load(reader, LoadOption.PreserveChanges);
+            }
 
-                using (OracleCommand cmd = new OracleCommand(q, conn))
+            foreach (Segment segment in model.SegmentSeznam)
+            {
+                if (segment.ImaOcenjevalneAtribute)
                 {
-                    DataTable dt = new DataTable();
-                    using (OracleDataReader reader = cmd.ExecuteReader())
-                    {
-                        dt.Load(reader, LoadOption.PreserveChanges);
-                    }
+                    var atributiRows = dt.AsEnumerable()
+                        .Where(x => x["segment_id"].ToString() == segment.SegmentId);
 
-                    foreach (Segment segment in this.OcenjevalniModel.SegmentSeznam)
+                    segment.Atributi = new List<Atribut>();
+
+                    foreach (DataRow dr in atributiRows)
                     {
-                        if (segment.ImaOcenjevalneAtribute)
+                        Atribut atr = new()
                         {
-                            IEnumerable<DataRow> atributiRows = dt.AsEnumerable().Select(x => x).Where(x => x["segment_id"].ToString() == segment.SegmentId);
-                            segment.Atributi = new();
-                            foreach (DataRow dr in atributiRows)
-                            {
-                                Atribut atr = new Atribut()
-                                {
-                                    AtributId = dr["ID"].ToString(),
-         
-                                    Opis = dr["OPIS"].ToString(),
-                                    SegmentId = dr["SEGMENT_ID"].ToString(),
-                                    StandardnaVrednost = dr["STANDARD"]?.AsDecimal(),
-                                    TipMeritve = dr["TIP_MERITVE"].ToString()=="NUM"?TipMeritveEnum.NUM: TipMeritveEnum.BOOL,
-                                    Enota = dr["ENOTA"].ToString(),
-                                };
-                                await PreberiStopnjeDB_Sync(atr.AtributId);
-                                segment.Atributi.Add(atr);
-                            }
-                        }
+                            AtributId = dr["ID"].ToString(),
+                            Opis = dr["OPIS"].ToString(),
+                            SegmentId = dr["SEGMENT_ID"].ToString(),
+                            StandardnaVrednost = dr["STANDARD"]?.AsDecimal(),
+                            TipMeritve = dr["TIP_MERITVE"].ToString() == "NUM" ? TipMeritveEnum.NUM : TipMeritveEnum.BOOL,
+                            Enota = dr["ENOTA"].ToString(),
+                        };
+
+                        await LoadStopnjeAsync(model, atr.AtributId);
+                        segment.Atributi.Add(atr);
                     }
                 }
             }
-
         }
-
-
-
-
     }
 }

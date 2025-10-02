@@ -1,5 +1,6 @@
 ﻿@using CustomTypeExtensions
 @using IzracunInvalidnostiBlazor.Models
+@using IzracunInvalidnostiBlazor.Services
 @using Microsoft.Extensions.Logging
 @using Microsoft.Extensions.Options
 @using System.Text.Json
@@ -149,67 +150,9 @@
 
     private void IzracunajMozneDeficite()
     {
-        // 1) agregati
-        Segment.IzmerjeniDeficit = new();
-        Segment.IzmerjeniDeficit.GibljivostSkupajL = Segment.Atributi.Sum(atr => atr.Ocena?.VrednostL ?? 0m);
-        Segment.IzmerjeniDeficit.GibljivostSkupajD = Segment.Atributi.Sum(atr => atr.Ocena?.VrednostD ?? 0m);
-        Segment.IzmerjeniDeficit.GibljivostSkupajE = Segment.Atributi.Sum(atr => atr.Ocena?.VrednostE ?? 0m);
-        Segment.IzmerjeniDeficit.StandardSkupaj = Segment.Atributi.Sum(atr => atr.StandardnaVrednost ?? 0m);
-
-        // 2) pripravi nabor kandidatov (počisti prejšnje rezultate!)
-        Segment.MozniDeficitNabor ??= new List<MozniDeficit>();
-        Segment.MozniDeficitNabor.Clear();
-
-        // 3) zbere vse stopnje iz atributov trenutnega segmenta (za IzracunajInvalidnost)
-        var vseStopnje = Segment.Atributi.SelectMany(a => a.Stopnje).ToList();
-
-        // 4) sestavi kandidate v skladu s simetrijo
-        if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD)
-        {
-            AddIfValid(MoznaPrimerjavaEnum.LS,
-                       Segment.IzmerjeniDeficit.GibljivostSkupajL,
-                       Segment.IzmerjeniDeficit.StandardSkupaj,
-                       StranLDE.L,
-                       vseStopnje);
-
-            AddIfValid(MoznaPrimerjavaEnum.DS,
-                       Segment.IzmerjeniDeficit.GibljivostSkupajD,
-                       Segment.IzmerjeniDeficit.StandardSkupaj,
-                       StranLDE.D,
-                       vseStopnje);
-
-            // medsebojna primerjava L-D in D-L, če želiš ponuditi tudi ta scenarij:
-            AddIfValid(MoznaPrimerjavaEnum.LD,
-                       Segment.IzmerjeniDeficit.GibljivostSkupajL,
-                       Segment.IzmerjeniDeficit.GibljivostSkupajD,
-                       StranLDE.L,
-                       vseStopnje);
-
-            AddIfValid(MoznaPrimerjavaEnum.DL,
-                       Segment.IzmerjeniDeficit.GibljivostSkupajD,
-                       Segment.IzmerjeniDeficit.GibljivostSkupajL,
-                       StranLDE.D,
-                       vseStopnje);
-        }
-        else if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
-        {
-            AddIfValid(MoznaPrimerjavaEnum.ES,
-                       Segment.IzmerjeniDeficit.GibljivostSkupajE,
-                       Segment.IzmerjeniDeficit.StandardSkupaj,
-                       StranLDE.E,
-                       vseStopnje);
-        }
-
-        // 5) izloči duplikate po strani + izračunanem odstotku (če želiš konsolidirati)
-        Segment.MozniDeficitNabor = Segment.MozniDeficitNabor
-            .GroupBy(d => new { d.StranLDE, Percent = d.IzracunaniOdstotek ?? -1m, d.MoznaPrimerjava })
-            .Select(g => g.First())
-            .OrderBy(d => d.StranLDE)
-            .ThenBy(d => d.IzracunaniOdstotek)
-            .ToList();
-        Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzracunani;
-        log_segment();
+        DeficitCalculator.IzracunajMozneDeficite(Segment, msg => Logger.LogInformation(msg));
     }
+
 
     private void ToggleDebug() => ShowDebug = !ShowDebug;
 
@@ -251,32 +194,6 @@
                 atr.Ocena = new();
         }
     }
-    private void AddIfValid(MoznaPrimerjavaEnum tip, decimal dejanska, decimal referenca, StranLDE stran, List<StopnjaDeficita> vseStopnje)
-    {
-        // zaščita pred deljenjem z 0
-        if (referenca == 0m) return;
-
-        var deficit = CalcDeficit(dejanska, referenca);
-        if (deficit >= 100m) return; // zavrzi očitno neveljavne ali ekstremne primere
-
-        var odstotek = IzracunajInvalidnost(deficit, vseStopnje);
-
-        Segment.MozniDeficitNabor.Add(new MozniDeficit
-        {
-            MoznaPrimerjava = tip,
-            Deficit = deficit,
-            StranLDE = stran,
-            IzbiraOpis = $"{tip.GetDescription()}: {odstotek}",
-            IzracunaniOdstotek = odstotek
-        });
-    }
-
-    private decimal CalcDeficit(decimal dejanska, decimal referenca)
-    {
-        if (referenca == 0m) return 0m;
-        var razlika = Math.Abs(referenca - dejanska);
-        return Math.Round((razlika / referenca) * 100m, 1);
-    }
 
 
     private void log_segment()
@@ -286,48 +203,5 @@
     }
 
 
-
-    private decimal? IzracunajInvalidnost(decimal deficitPercent, List<StopnjaDeficita> stopnje)
-    {
-        if (stopnje == null || stopnje.Count == 0) return null;
-
-        var coef = deficitPercent / 100m;
-
-        // relativne (R) s numeričnimi mejami
-        var relativne = stopnje
-            .Where(s => s.OdstotekFR == OdstotekFR.R && s.ObmocjeNum.HasValue)
-            .OrderBy(s => s.ObmocjeNum.Value)
-            .ToArray();
-
-        if (relativne.Length > 0)
-        {
-            if (coef <= relativne[0].ObmocjeNum) return relativne[0].StopnjaNum;
-
-            var nextIndex = Array.FindIndex(relativne, s => coef <= s.ObmocjeNum);
-            if (nextIndex >= 0)
-            {
-                var prev = relativne[nextIndex - 1];
-                var next = relativne[nextIndex];
-                var span = next.ObmocjeNum.Value - prev.ObmocjeNum.Value;
-                var t = span == 0 ? 1 : (coef - prev.ObmocjeNum.Value) / span;
-                return Math.Round(prev.StopnjaNum + t * (next.StopnjaNum - prev.StopnjaNum), 1);
-            }
-
-            return relativne[^1].StopnjaNum;
-        }
-
-        // fiksne (F)
-        var fiksne = stopnje
-            .Where(s => s.OdstotekFR == OdstotekFR.F)
-            .OrderBy(s => s.ZapSt)
-            .Select(s => s.StopnjaNum)
-            .ToArray();
-
-        if (fiksne.Length == 0) return null;
-        if (coef <= 0) return 0;
-
-        var idx = Math.Min((int)(coef * fiksne.Length), fiksne.Length - 1);
-        return fiksne[idx];
-    }
 
 }

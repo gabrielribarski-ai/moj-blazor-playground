@@ -119,30 +119,38 @@ else
     }
 
 
-    private void OnSegmentPotrjen(Segment seg)
+    private async void OnSegmentPotrjen(Segment seg)
     {
-        ocenjevalniModel.DodajMedOcenjeneSegmente(seg); 
+        ocenjevalniModel.DodajMedOcenjeneSegmente(seg);
         ocenjevalniModel.TrenutniSegmentSet(ocenjevalniModel.GetRootSegment().SegmentId);
+
+        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
     }
+
 
 
     private async Task NavigirajNaSegment(Segment segment)
     {
         await ocenjevalniModel.TrenutniSegmentSet(segment.SegmentId);
+
+        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+
         var atr = ocenjevalniModel?.AtributiZaPrikaz;
         if (atr?.Count > 0)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(atr);
-            Logger.LogInformation("ocenjevalniModelLoader?.ocenjevalniModel?.AtributiZaPrikaz", json);
+            Logger.LogInformation("Atributi za prikaz: {json}", json);
         }
-        //StateHasChanged();
     }
 
 
-    private void VpogledVOcenjeniSegment(Segment seg)
+
+    private async Task VpogledVOcenjeniSegment(Segment seg)
     {
         ocenjevalniModel.VpogledVOcenjeniSegment(seg.SegmentId);
         seg.FazaOcenjevanja = FazaOcenjevanjaEnum.Vpogled;
+
+        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
     }
 
 

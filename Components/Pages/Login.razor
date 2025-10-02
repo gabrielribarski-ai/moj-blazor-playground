@@ -1,0 +1,38 @@
+﻿@page "/"
+@using IzracunInvalidnostiBlazor.Models
+@using IzracunInvalidnostiBlazor.Services
+@inject NavigationManager Nav
+@inject UserSessionStorageService SessionService
+@inject IConfiguration Config
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Preberi query string
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        var user = new PrijavljenUporabnik
+        {
+            UpIme = query["username"] ?? "NovakJ",
+            Ime = query["ime"] ?? "Janez",
+            Priimek = query["priimek"] ?? "Novak",
+            CasPrijave = DateTime.Now,
+            StDokumenta="D-3221342354",
+            OcenjevalniModel = new OcenjevalniModel()
+            {
+                // Lahko dodaš še inicializacijo, če želiš
+            }
+        };
+
+
+        var loader = new OcenjevalniModelDBLoader(Config);
+        await loader.LoadPogojSeznamAsync(user.OcenjevalniModel);
+        await loader.LoadSegmentSeznamAsync(user.OcenjevalniModel);
+
+        await SessionService.SaveUserAsync(user);
+
+        // Preusmeri na glavno stran
+        Nav.NavigateTo("/izberi-pogoj", forceLoad: true);
+    }
+}

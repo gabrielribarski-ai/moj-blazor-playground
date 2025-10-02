@@ -2,8 +2,10 @@
 
 namespace IzracunInvalidnostiBlazor.Models
 {
+    public enum TipMeritveEnum { NUM, BOOL };
 
-    public enum MoznaPrimerjavaEnum
+    public enum StranLDE { L, D, E }
+    public enum Enum
     {
         [Description("L <=> S")]
         LS, //LD

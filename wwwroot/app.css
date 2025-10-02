@@ -1,5 +1,7 @@
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Open Sans', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
 a, .btn-link {
@@ -16,9 +18,6 @@ a, .btn-link {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-.content {
-    padding-top: 1.1rem;
-}
 
 h1:focus {
     outline: none;
@@ -226,4 +225,143 @@ button.btn-izracunaj {
     transform: none; /* naj se ne premika */
     box-shadow: none;
     background-color: #0d6efd; /* ostane enako */
+}
+
+
+/* App shell toggles a class to reserve space for the loader when visible */
+.app-shell {
+    --loader-height: 12px;
+}
+
+
+/* Header */
+.app-header {
+    background-color: #fff;
+    border-top: 1px solid #d52b1e; /* samo zgoraj */
+    border-bottom: 1px solid #d52b1e; /* samo spodaj */
+    border-left: none; /* brez levega */
+    border-right: none; /* brez desnega */
+
+    border-radius: 0;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 70px;
+}
+
+    .app-header .logo {
+        height: 42px;
+    }
+
+    .app-header .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+
+
+
+/* Reserve space for loader only when visible */
+.app-shell.has-loader .content {
+    padding-top: var(--loader-height);
+    transition: padding-top 0.2s ease;
+}
+
+/* Content base padding (keeps layout tidy) */
+.content {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #d52b1e; /* samo zgoraj */
+}
+
+/* Animated dots */
+
+table td, table th {
+    padding: 0.5rem 1rem; /* enotno za vse celice */
+}
+
+
+table.atributi-tabela td, table.atributi-tabela th {
+    padding: 0.5rem 0.75rem; /* notranji razmik */
+    border: 1px solid #ddd; /* subtilna obroba */
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+
+.header-wrap {
+    position: relative;
+}
+/* Loader je vedno prisoten */
+.btn-logout {
+    background-color: #d52b1e; /* Generali rdeèa */
+    color: #fff;
+    border: none;
+    border-radius: 0; /* brez zaobljenih robov */
+    padding: 0.4rem 0.9rem; /* malo notranjega prostora */
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+.loading-bar {
+    height: 12px; /* vedno enaka višina */
+    width: 100%; /* vedno èez celotno širino */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+    font-size: 9px;
+    font-weight: 400;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+    /* Idle stanje – siv trak */
+    .loading-bar.hide {
+        background-color: #ffe8e8; /* pederajsasto roza barva */
+        color: transparent; /* tekst in pike skrijemo */
+    }
+
+    /* Aktivno stanje – rdeè trak */
+    .loading-bar.show {
+        background-color: #d52b1e;
+        color: #fff;
+    }
+
+    /* animirane pike */
+    .loading-bar .dots span {
+        animation: blink 1.4s infinite both;
+        font-size: 12px;
+        line-height: 1;
+    }
+
+    .loading-bar.hide .dots span {
+        color: transparent; /* pike skrijemo v idle stanju */
+    }
+
+    .loading-bar .dots span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .loading-bar .dots span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+@keyframes blink {
+    0% {
+        opacity: 0.2;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.2;
+    }
 }

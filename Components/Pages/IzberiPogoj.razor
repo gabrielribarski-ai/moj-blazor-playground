@@ -1,6 +1,7 @@
-﻿@page "/"
+﻿@page "/izberi-pogoj"
 @namespace IzracunInvalidnostiBlazor
 @using IzracunInvalidnostiBlazor.Extensions
+@using IzracunInvalidnostiBlazor.HelperClass
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
@@ -8,20 +9,22 @@
 @inject ILogger<Index> Logger
 @inject OcenjevalniModelDBLoader ocenjevalniModelLoader
 @inject ProtectedSessionStorage SessionStorage
-@inject OcenjevalniModelSessionService ModelSession
 @inject NavigationManager Nav
-
-@inject OcenjevalniModelSessionService ModelStorageService
-
+@inject UserSessionStorageService UserSessionStorage
+@inject LoaderService Loader   
 
 <h5>Izberi pogoj</h5>
 
-@if ( !ocenjevalniModelLoader.IsPogojiSeznamLoaded)
+@if (ocenjevalniModel?.PogojSeznam == null || !ocenjevalniModel.PogojSeznam.Any())
 {
     <p>Nalaganje pogojev...</p>
 }
 else
 {
+    <div>
+    <span>Št. dokumenta:&nbsp;</span>
+    <span>@user.StDokumenta </span>
+    </div>
     <select @onchange="OnPogojChanged">
         <option value="">-- Izberi --</option>
         @foreach (var pogoj in ocenjevalniModel.PogojSeznam)
@@ -33,27 +36,34 @@ else
 
 @code {
     private OcenjevalniModel ocenjevalniModel;
-
-
+    private PrijavljenUporabnik? user;
     protected override async Task OnInitializedAsync()
     {
-        await ocenjevalniModelLoader.LoadPogojSeznamFromDB();
-        ocenjevalniModel = ocenjevalniModelLoader.OcenjevalniModel;
+        ocenjevalniModel = new OcenjevalniModel();
+
+        // naloži uporabnika iz session storage
+        user = await UserSessionStorage.LoadUserAsync();
+
+
+        ocenjevalniModel = new OcenjevalniModel();
+        await ocenjevalniModelLoader.LoadPogojSeznamAsync(ocenjevalniModel)
+               .WithLoader(Loader, "Nalaganje pogojev...");
+
     }
 
     private async Task OnPogojChanged(ChangeEventArgs e)
     {
-        string izbranPogojId = e.Value.ToString();
+        string izbranPogojId = e.Value?.ToString();
 
-        await ocenjevalniModelLoader.LoadSegmentSeznamFromDB();
-        //await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
-        await ocenjevalniModel.IzbranPogojSet(izbranPogojId);
-        await ocenjevalniModelLoader.PreberiStopnjeDB_Sync(izbranPogojId);
-        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
-        //ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
+        // vse skupaj ovijemo v loader
+        await Loader.RunWithLoader("Berem podatke za izbran pogoj...", async () =>
+        {
+            await ocenjevalniModelLoader.LoadSegmentSeznamAsync(ocenjevalniModel);
+            await ocenjevalniModel.IzbranPogojSet(izbranPogojId);
+            await ocenjevalniModelLoader.LoadStopnjeAsync(ocenjevalniModel, izbranPogojId);
+            await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+        });
+
         Nav.NavigateTo("/oceni-invalidnost");
-
     }
-
-
 }
