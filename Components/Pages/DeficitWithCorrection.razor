@@ -38,6 +38,7 @@
 </div>
 
 @code {
+
     [Parameter] public Segment Segment { get; set; } = default!;
     [Parameter] public StranLDE Stran { get; set; }
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }

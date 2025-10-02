@@ -222,8 +222,8 @@ button.btn-izracunaj {
     box-shadow: none; /* brez hover sence */
 }
 
-    .trenutna-pot-box .crumb.active:hover {
-        transform: none; /* naj se ne premika */
-        box-shadow: none;
-        background-color: #0d6efd; /* ostane enako */
-    }
+.trenutna-pot-box .crumb.active:hover {
+    transform: none; /* naj se ne premika */
+    box-shadow: none;
+    background-color: #0d6efd; /* ostane enako */
+}

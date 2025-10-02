@@ -15,7 +15,6 @@ public class PogojDBLoader
     }
 
 
-
     public async Task PreberiPogoje()
     {
         Seznam = new List<Pogoj>();

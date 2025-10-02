@@ -30,7 +30,6 @@ namespace IzracunInvalidnostiBlazor.Services
             //ocenjevalniModel = new OcenjevalniModel();
         }
 
-
         public async Task LoadPogojSeznamFromDB()
         {
             if (IsPogojiSeznamLoaded) return; // 👈 prepreči dvojni query

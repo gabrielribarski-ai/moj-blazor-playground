@@ -17,11 +17,10 @@
 </select>
 
 @code {
+
     [Parameter] public StranLDE Stran { get; set; }
     [Parameter] public IEnumerable<MozniDeficit> MozniZaStran { get; set; } = Enumerable.Empty<MozniDeficit>();
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
-
-
 
     // to bo vezano na <select>
     
