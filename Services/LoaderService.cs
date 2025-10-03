@@ -23,7 +23,7 @@
     {
         try
         {
-            Show(message);
+            Show(message??"");
             await action();
         }
         finally

@@ -5,27 +5,27 @@
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.Extensions.Logging
 @inject NavigationManager NavigationManager
-@inject OcenjevalniModelDBLoader ocenjevalniModelLoader
+@inject DataDBLoader DataDBLoader
 @inject ProtectedSessionStorage SessionStorage
 @inject ILogger<Index> Logger
 @rendermode InteractiveServer
+@inject IConfiguration _config
+@inject UserSessionStorageService UserSessionStorage
+@inject LoaderService Loader
+
 
 <h6>Izberi del telesa za ocenjevanje</h6>
 
-@if (ocenjevalniModel?.trenutniSegment == null)
-{
-    <p>Nalaganje podatkov...</p>
-}
-else
+@if (user?.OcenjevalniModel?.TrenutniSegment != null)
 {
     <div class="row">
         <!-- Leva stran: glavni del -->
         <div class="col-md-6 small-font">
             <!-- Breadcrumb -->
             <div class="trenutna-pot-box mb-3">
-                @foreach (var korak in ocenjevalniModel.BreadcrumbPath)
+                @foreach (var korak in user?.OcenjevalniModel?.BreadcrumbPath)
                 {
-                    var isLast = korak == ocenjevalniModel.BreadcrumbPath.Last();
+                    var isLast = korak == user?.OcenjevalniModel?.BreadcrumbPath.Last();
 
                     <span class="crumb @(isLast ? "active" : "")"
                           @onclick="@(() => NavigirajNaSegment(korak))"
@@ -42,16 +42,16 @@ else
 
 
             <!-- Atributi -->
-            @if (ocenjevalniModel?.AtributiZaPrikaz?.Count > 0)
+            @if (user?.OcenjevalniModel?.AtributiZaPrikaz?.Count > 0)
             {
-                <OcenjevalniAtribut Segment="ocenjevalniModel?.trenutniSegment"
-                                    @key="ocenjevalniModel?.trenutniSegment?.SegmentId"
+                <OcenjevalniAtribut Segment="user?.OcenjevalniModel.TrenutniSegment"
+                                    @key="user?.OcenjevalniModel?.TrenutniSegment?.SegmentId"
                                     OnOcenaPotrjena="OnSegmentPotrjen" />
             }
 
             <!-- Podsegmenti -->
             <div class="podsegment-list mb-4">
-                @foreach (var seg in ocenjevalniModel?.SegmentiZaPrikaz)
+                @foreach (var seg in user?.OcenjevalniModel?.SegmentiZaPrikaz)
                 {
                     <div class="card podsegment-card mb-2"
                          @onclick="() => NavigirajNaSegment(seg)"
@@ -67,12 +67,12 @@ else
 
         <!-- Desna stran: že ocenjeni segmenti -->
         <div class="col-md-6 small-font">
-            @if (ocenjevalniModel?.OcenjenSegmentSeznam?.Any() == true)
+            @if (user?.OcenjenSegmentSeznam?.Any() == true)
             {
                 <div class="p-3 border rounded bg-light sticky-top" style="top: 1rem;">
                     <h5>Že ocenjeni segmenti</h5>
                     <ul class="list-group small">
-                        @foreach (var seg in ocenjevalniModel.OcenjenSegmentSeznam)
+                        @foreach (var seg in user?.OcenjenSegmentSeznam)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span><b>@seg.SegmentTreePath</b></span>
@@ -87,7 +87,7 @@ else
 
                     <!-- Povzetek vseh segmentov -->
                     <div class="mt-3 text-end">
-                        <strong>Skupaj:</strong> @ocenjevalniModel.SkupnaOcena %
+                        <strong>Skupaj:</strong> @user.SkupnaOcena %
                     </div>
                 </div>
             }
@@ -98,10 +98,23 @@ else
 
 @code {
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private PrijavljenUporabnik user;
     private bool _initialized = false;
     private Segment? TrenutniSegment;
-
-    private OcenjevalniModel ocenjevalniModel;
 
     private List<Segment> OcenjeniSegmenti = new();
     private decimal SkupnaInvalidnost;
@@ -113,29 +126,37 @@ else
     {
         if (firstRender)
         {
-            ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
+
+            await Loader.RunWithLoader("Berem podatke", async () =>
+            {
+                user = await UserSessionStorage.LoadUserAsync();
+                //ocenjevalniModel = user.OcenjevalniModel;   
+            });
+
+            //ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
             StateHasChanged(); // Optional; OnAfterRenderAsync usually doesn’t need it after firstRender
         }
     }
 
 
+
     private async void OnSegmentPotrjen(Segment seg)
     {
-        ocenjevalniModel.DodajMedOcenjeneSegmente(seg);
-        ocenjevalniModel.TrenutniSegmentSet(ocenjevalniModel.GetRootSegment().SegmentId);
+        user.DodajMedOcenjeneSegmente(seg);
+        await Loader.RunWithLoader("Shranjujem podatke", async () =>
+        {
+            await user.OcenjevalniModel.SetTrenutniSegment(user?.OcenjevalniModel.GetRootSegment().SegmentId);
 
-        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+            await UserSessionStorage.SaveUserAsync(user);
+        });
     }
-
 
 
     private async Task NavigirajNaSegment(Segment segment)
     {
-        await ocenjevalniModel.TrenutniSegmentSet(segment.SegmentId);
-
-        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
-
-        var atr = ocenjevalniModel?.AtributiZaPrikaz;
+        await user.OcenjevalniModel.SetTrenutniSegment(segment.SegmentId);
+        await user.OcenjevalniModel.SaveSessionToStorage(SessionStorage);
+        var atr = user.OcenjevalniModel?.AtributiZaPrikaz;
         if (atr?.Count > 0)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(atr);
@@ -144,13 +165,12 @@ else
     }
 
 
-
     private async Task VpogledVOcenjeniSegment(Segment seg)
     {
-        ocenjevalniModel.VpogledVOcenjeniSegment(seg.SegmentId);
+        user.VpogledVOcenjeniSegment(seg.SegmentId);
         seg.FazaOcenjevanja = FazaOcenjevanjaEnum.Vpogled;
 
-        await ocenjevalniModel.SaveSessionToStorage(SessionStorage);
+        await user.OcenjevalniModel.SaveSessionToStorage(SessionStorage);
     }
 
 

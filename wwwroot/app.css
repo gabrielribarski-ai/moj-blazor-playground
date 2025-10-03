@@ -237,11 +237,10 @@ button.btn-izracunaj {
 /* Header */
 .app-header {
     background-color: #fff;
-    border-top: 1px solid #d52b1e; /* samo zgoraj */
-    border-bottom: 1px solid #d52b1e; /* samo spodaj */
+    /*border-top: 1px solid #d52b1e;*/ /* samo zgoraj */
+    /*border-bottom: 1px solid #d52b1e; *//* samo spodaj */
     border-left: none; /* brez levega */
     border-right: none; /* brez desnega */
-
     border-radius: 0;
     margin: 0;
     padding: 0.5rem 1rem;
@@ -264,8 +263,6 @@ button.btn-izracunaj {
     }
 
 
-
-
 /* Reserve space for loader only when visible */
 .app-shell.has-loader .content {
     padding-top: var(--loader-height);
@@ -275,21 +272,7 @@ button.btn-izracunaj {
 /* Content base padding (keeps layout tidy) */
 .content {
     padding: 0.5rem 1rem;
-    border-top: 1px solid #d52b1e; /* samo zgoraj */
-}
-
-/* Animated dots */
-
-table td, table th {
-    padding: 0.5rem 1rem; /* enotno za vse celice */
-}
-
-
-table.atributi-tabela td, table.atributi-tabela th {
-    padding: 0.5rem 0.75rem; /* notranji razmik */
-    border: 1px solid #ddd; /* subtilna obroba */
-    text-align: left;
-    font-size: 0.9rem;
+    /*border-top: 1px solid #d52b1e;*/ /* samo zgoraj */
 }
 
 
@@ -323,15 +306,10 @@ table.atributi-tabela td, table.atributi-tabela th {
 
     /* Idle stanje – siv trak */
     .loading-bar.hide {
-        background-color: #ffe8e8; /* pederajsasto roza barva */
+        background-color: #e2e2e2; 
         color: transparent; /* tekst in pike skrijemo */
     }
 
-    /* Aktivno stanje – rdeè trak */
-    .loading-bar.show {
-        background-color: #d52b1e;
-        color: #fff;
-    }
 
     /* animirane pike */
     .loading-bar .dots span {
@@ -363,5 +341,37 @@ table.atributi-tabela td, table.atributi-tabela th {
 
     100% {
         opacity: 0.2;
+    }
+}
+
+.loading-bar.show {
+    background: linear-gradient( 90deg, #e2e2e2 0%, /* zaèetek siva */
+    #d52b1e 10%, /* rdeèa se pojavi postopoma */
+    #d52b1e 20%, /* polna rdeèa (trak je krajši) */
+    #e2e2e2 50%, /* fade nazaj v sivo */
+    #e2e2e2 100% /* ostane siva */
+    );
+    background-size: 200% 100%;
+    animation: slideRed 1.5s infinite linear alternate;
+}
+
+@keyframes slideRed {
+    0% {
+        background-position: 0% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+
+@keyframes slideBar {
+    0% {
+        background-position: 0% 0;
+    }
+
+    100% {
+        background-position: 100% 0;
     }
 }

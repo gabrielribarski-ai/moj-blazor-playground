@@ -6,31 +6,59 @@ namespace IzracunInvalidnostiBlazor.Services
 {
     public class UserSessionStorageService
     {
-        private readonly ProtectedSessionStorage _sessionStorage;
-        private const string UserKey = "PrijavljenUporabnik";
+        private readonly ProtectedSessionStorage _session;
+        private readonly DataDBLoader _data;
+        public PrijavljenUporabnik? CurrentUser { get; private set; }
 
-        public UserSessionStorageService(ProtectedSessionStorage sessionStorage)
+        public UserSessionStorageService(ProtectedSessionStorage session, DataDBLoader data)
         {
-            _sessionStorage = sessionStorage;
+            _session = session;
+            _data = data;
         }
 
-        // 🔹 Shrani uporabnika v session storage
-        public async Task SaveUserAsync(PrijavljenUporabnik user)
-        {
-            await _sessionStorage.SetAsync(UserKey, user);
-        }
-
-        // 🔹 Prebere uporabnika iz session storage
         public async Task<PrijavljenUporabnik?> LoadUserAsync()
         {
-            var result = await _sessionStorage.GetAsync<PrijavljenUporabnik>(UserKey);
-            return result.Success ? result.Value : null;
+            if (CurrentUser != null) return CurrentUser;
+            var res = await _session.GetAsync<PrijavljenUporabnik>("PrijavljenUporabnik");
+            CurrentUser = res.Success ? res.Value : null;
+            return CurrentUser;
         }
 
-        // 🔹 Pobriše uporabnika iz session storage
-        public async Task ClearUserAsync()
+        public async Task EnsurePogojiAsync()
         {
-            await _sessionStorage.DeleteAsync(UserKey);
+            if (CurrentUser == null) return;
+            CurrentUser.OcenjevalniModel ??= new OcenjevalniModel();
+            if (CurrentUser.OcenjevalniModel.PogojSeznam == null)
+                CurrentUser.OcenjevalniModel.PogojSeznam = await _data.LoadPogojSeznamAsync();
         }
+
+        public async Task PrepareZaPogojAsync(string pogojId)
+        {
+            if (CurrentUser == null) return;
+            var m = CurrentUser.OcenjevalniModel ??= new OcenjevalniModel();
+            m.SegmentSeznam = await _data.LoadSegmentSeznamAsync();
+            await _data.PreberiInPoveziAtributeDBAsync(m);
+            await CurrentUser.SetIzbranPogoj(pogojId);
+            await _data.LoadStopnjeAsync(m, pogojId);
+            await SaveUserAsync(CurrentUser);
+        }
+
+        public async Task SaveUserAsync(PrijavljenUporabnik user)
+        {
+            CurrentUser = user;
+            await _session.SetAsync("PrijavljenUporabnik", user);
+        }
+
+        public async Task SaveSessionToStorage()
+        {
+            if (CurrentUser != null)
+                await _session.SetAsync("PrijavljenUporabnik", CurrentUser);
+        }
+        public async Task ClearSessionFromStorage()
+        {
+            CurrentUser = null;
+            await _session.DeleteAsync("PrijavljenUporabnik");
+        }
+
     }
 }

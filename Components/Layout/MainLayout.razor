@@ -1,7 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
-@inject UserSessionStorageService SessionService
+@inject UserSessionStorageService UserSessionStorage
 @inject NavigationManager Nav
 @inject LoaderService Loader
 
@@ -47,11 +47,11 @@
         {
             user = await Loader.RunWithLoader("Pridobivam podatke uporabnika...", async () =>
             {
-                return await SessionService.LoadUserAsync();
+                return await UserSessionStorage.LoadUserAsync();
             });
 
-            Loader.Show("BLABLABALBA");
-            StateHasChanged();
+            //Loader.Show("BLABLABALBA");
+           // StateHasChanged();
         }
     }
 
@@ -64,8 +64,9 @@
     {
         await Loader.RunWithLoader("Odjavljam uporabnika...", async () =>
         {
-            await SessionService.ClearUserAsync();
+            await UserSessionStorage.ClearSessionFromStorage();   // to že obstaja
             Nav.NavigateTo("/", forceLoad: true);
         });
     }
+
 }

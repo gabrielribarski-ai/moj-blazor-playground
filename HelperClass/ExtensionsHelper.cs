@@ -121,7 +121,7 @@ namespace CustomTypeExtensions
         }
 
 
-        public static decimal? AsDecimal(this object inputObj, decimal? default_ = null, CultureInfo? culture = null)
+        public static decimal? AsDecimal(this object inputObj, CultureInfo? culture = null, decimal ? default_ = null )
         {
             if (inputObj == null || inputObj == DBNull.Value)
                 return default_;

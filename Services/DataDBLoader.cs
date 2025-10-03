@@ -3,23 +3,29 @@ using CustomTypeExtensions;
 using IzracunInvalidnostiBlazor.Models;  // Atribut, StopnjaDeficita
 using Microsoft.Extensions.Configuration;
 using Oracle.ManagedDataAccess.Client;
+using System.Collections.Generic;
 using System.Data;
 
 namespace IzracunInvalidnostiBlazor.Services
 {
-    public class OcenjevalniModelDBLoader
+    public class DataDBLoader
     {
         private readonly string connStr;
 
-        public OcenjevalniModelDBLoader(IConfiguration config)
+        public DataDBLoader(IConfiguration config)
         {
             connStr = config.GetConnectionString("APL_INVALIDNOST");
         }
 
-        public async Task LoadPogojSeznamAsync(OcenjevalniModel model)
+        public DataDBLoader()
         {
-            if (model.PogojSeznam?.Any() == true) return; // prepreči dvojni query
-            model.PogojSeznam = new List<Pogoj>();
+        }
+
+        public async Task<List<Pogoj>> LoadPogojSeznamAsync()
+        {
+            List <Pogoj> result=new ();
+            //if (model.PogojSeznam?.Any() == true) return; // prepreči dvojni query
+            //model.PogojSeznam = new List<Pogoj>();
 
             await using var conn = new OracleConnection(connStr);
             await conn.OpenAsync();
@@ -30,18 +36,19 @@ namespace IzracunInvalidnostiBlazor.Services
 
             while (await reader.ReadAsync())
             {
-                model.PogojSeznam.Add(new Pogoj
+                result.Add(new Pogoj
                 {
                     PogojId = reader["ID"].ToString(),
                     Sifra = reader["SIFRA"].ToString(),
                     Opis = reader["OPIS"].ToString()
                 });
             }
+            return result;
         }
 
-        public async Task LoadSegmentSeznamAsync(OcenjevalniModel model)
+        public async Task<List<Segment>> LoadSegmentSeznamAsync( )
         {
-            model.SegmentSeznam = new List<Segment>();
+            var result = new List<Segment>();
 
             await using var conn = new OracleConnection(connStr);
             await conn.OpenAsync();
@@ -55,7 +62,7 @@ namespace IzracunInvalidnostiBlazor.Services
 
             foreach (DataRow dr in dt.Rows)
             {
-                model.SegmentSeznam.Add(new Segment
+                result.Add(new Segment
                 {
                     SegmentId = dr["SEGMENT_ID"].ToString(),
                     Opis = dr["OPIS"].ToString(),
@@ -67,7 +74,47 @@ namespace IzracunInvalidnostiBlazor.Services
                 });
             }
 
-            await LoadAtributeAsync(model);
+           return result;
+        }
+
+        public async Task PreberiStopnjDBAsync(OcenjevalniModel model, string pogojId)
+        {
+            using (var conn = new OracleConnection(connStr))
+            {
+                conn.Open();
+                string q = "select * from vw_b1_atr_stopnja where pogoj_id=:pogoj_id";
+
+                using (OracleCommand cmd = new OracleCommand(q, conn))
+                {
+                    cmd.Parameters.Add(new OracleParameter("pogoj_id", OracleDbType.Varchar2, pogojId, ParameterDirection.Input));
+
+                    DataTable dt = new DataTable();
+                    using (OracleDataReader reader = cmd.ExecuteReader())
+                    {
+                        dt.Load(reader, LoadOption.PreserveChanges);
+                    }
+
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        string atribut_id = dr["atribut_id"].ToString();
+                        var atr = FindAtributById(model,  atribut_id);
+                        if (atr != null)
+                        {
+                            StopnjaDeficita stopnja = new();
+                            stopnja.PogojAtributId = dr["pogoj_atribut_id"].ToString();
+                            stopnja.ZapSt = dr["zap_st"].ToInt().Value;
+                            stopnja.OdstotekFR = dr["fiksni_odstotek"].ToString() == "N" ? OdstotekFR.R : OdstotekFR.F;
+                            stopnja.StopnjaOpis = dr["stopnja_opis"].ToString();
+                            stopnja.ObmocjeNum = dr["obmocje_num"].AsDecimal();
+                            stopnja.StopnjaNum = dr["stopnja_num"].ToInt().Value;
+                            stopnja.TockaOpis = dr["tocka_opis"].ToString();
+                            stopnja.Operator = dr["operator_1"].ToString();
+                            stopnja.Operator = dr["operator_1"].ToString();
+                            atr.Stopnje.Add(stopnja);
+                        }
+                    }
+                }
+            }
         }
 
         public Atribut? FindAtributById(OcenjevalniModel model, string atributId)
@@ -115,7 +162,7 @@ namespace IzracunInvalidnostiBlazor.Services
             }
         }
 
-        public async Task LoadAtributeAsync(OcenjevalniModel model)
+        public async Task PreberiInPoveziAtributeDBAsync(OcenjevalniModel model)
         {
             await using var conn = new OracleConnection(connStr);
             await conn.OpenAsync();

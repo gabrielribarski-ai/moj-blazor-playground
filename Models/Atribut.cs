@@ -10,7 +10,7 @@ namespace IzracunInvalidnostiBlazor
 
         public decimal? StandardnaVrednost { get; set; }
 
-        public AtributOcena Ocena { get; set; }
+        public AtributOcena Ocena { get; set; } = new AtributOcena();   
 
         public List<StopnjaDeficita> Stopnje { get; set; } = new();
 

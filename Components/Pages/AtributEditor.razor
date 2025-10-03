@@ -21,26 +21,35 @@
         {
             <tr>
                 <td>@atribut.Opis</td>
+
                 @if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
                 {
                     <td>
-                        <InputNumber @bind-Value="atribut.Ocena.VrednostE"
-                                     @bind-Value:after="() => OnValueChanged()"
+                        <InputNumber Value="atribut.Ocena.VrednostE"
+                                     ValueExpression="() => atribut.Ocena.VrednostE"
+                                     @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetE(atribut, v), atribut.Ocena.VrednostE)"
                                      class="form-control input-box-measurement" />
+
                     </td>
                 }
                 else
                 {
                     <td>
-                        <InputNumber @bind-Value="atribut.Ocena.VrednostL"
-                                     @bind-Value:after="() => OnValueChanged()"
+                        <InputNumber Value="atribut.Ocena.VrednostL"
+                                     ValueExpression="() => atribut.Ocena.VrednostL"
+                                     @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetL(atribut, v), atribut.Ocena.VrednostE)"
                                      class="form-control input-box-measurement" />
+
                     </td>
-                    <td>@atribut.StandardnaVrednost</td>
+
+                    <td>@(atribut.StandardnaVrednost?.ToString("0.##") ?? "—")</td>
+
                     <td>
-                        <InputNumber @bind-Value="atribut.Ocena.VrednostD"
-                                     @bind-Value:after="() => OnValueChanged()"
+                        <InputNumber Value="atribut.Ocena.VrednostD"
+                                     ValueExpression="() => atribut.Ocena.VrednostD"
+                                     @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetD(atribut, v), atribut.Ocena.VrednostE)"
                                      class="form-control input-box-measurement" />
+
                     </td>
                 }
             </tr>
@@ -53,27 +62,37 @@
     [Parameter] public EventCallback<FazaOcenjevanjaEnum> FazaChanged { get; set; }
 
 
-    private void OnValueChanged()
+
+    private void SetE(Atribut atribut, decimal? v)
     {
-
-        bool b = false;
-        // preveri, ali ima vsak atribut vsaj eno vneseno vrednost
-        if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
-        {
-            b = Segment.Atributi.All(a => a.Ocena.VrednostE.HasValue);
-        }
-        else
-        {
-            b = Segment.Atributi.All(a => a.Ocena.VrednostL.HasValue && a.Ocena.VrednostD.HasValue);
-        }
-        if (b)
-        {
-            Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
-            FazaChanged.InvokeAsync(Segment.FazaOcenjevanja);
-        }
-
-        //StateHasChanged();
+        atribut.Ocena.VrednostE = v;
+        _ = OnValuesMaybeComplete();
     }
 
+    private void SetL(Atribut atribut, decimal? v)
+    {
+        atribut.Ocena.VrednostL = v;
+        _ = OnValuesMaybeComplete();
+    }
+
+    private void SetD(Atribut atribut, decimal? v)
+    {
+        atribut.Ocena.VrednostD = v;
+        _ = OnValuesMaybeComplete();
+    }
+
+    private async Task OnValuesMaybeComplete()
+    {
+        bool allSet =
+            Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E
+            ? Segment.Atributi.All(a => a.Ocena?.VrednostE.HasValue == true)
+            : Segment.Atributi.All(a => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true);
+
+        if (allSet)
+        {
+            Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
+            await FazaChanged.InvokeAsync(Segment.FazaOcenjevanja);
+        }
+    }
 
 }

@@ -11,7 +11,7 @@
     @foreach (var def in MozniZaStran)
     {
         <option value="@def.IzracunaniOdstotek?.ToString(CultureInfo.InvariantCulture)">
-            @def.IzbiraOpis %
+            @def.IzbiraOpis @(def.IzracunaniOdstotek?.ToString("0.##", CultureInfo.CurrentCulture)) %
         </option>
     }
 </select>
@@ -31,7 +31,12 @@
         set
         {
             decimal? parsed = value.AsDecimal(CultureInfo.InvariantCulture);
-            // dvigni event navzgor
+
+            foreach (var def in MozniZaStran)
+            {
+                def.JeIzbran = def.IzracunaniOdstotek == parsed;
+            }
+
             OnSelectionChanged.InvokeAsync((Stran, parsed));
         }
     }

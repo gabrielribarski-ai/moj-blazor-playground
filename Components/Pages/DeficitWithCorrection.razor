@@ -1,11 +1,16 @@
 ﻿@* filename: DeficitWithCorrection.razor *@
 @using IzracunInvalidnostiBlazor.Models
+@using IzracunInvalidnostiBlazor.Services
+@inject LoaderService Loader
+@inject UserSessionStorageService UserSessionStorage
+@using CustomTypeExtensions
+@using System.Globalization
 
 <div class="deficit-block @CssClassForStran(Stran)">
     <h6 class="fw-bold">@NaslovZaStran(Stran)</h6>
 
     <div class="d-flex align-items-center gap-2">
-        <DeficitSelector @key=@($"{Segment.SegmentId}-{Stran}")
+        <DeficitSelector @key="@($"{Segment.SegmentId}-{Stran}")"
                          Stran="Stran"
                          MozniZaStran="Segment.MozniDeficitNabor.Where(d => d.StranLDE == Stran)"
                          OnSelectionChanged="OnSelectionChanged" />
@@ -23,33 +28,104 @@
     @if (PrikaziKorekcijo && IzbranDeficit != null)
     {
         <div class="mt-2 ms-4 p-2 border rounded bg-light">
-            <input type="number" step="0.1" min="0" max="100"
+            <input type="text"
                    class="form-control form-control-sm mb-2"
                    placeholder="Ročni odstotek"
-                   value="@Segment.GetKorekcija(Stran)"
-                   @oninput="e => Segment.SetKorekcija(Stran, ParseDecimal(e.Value?.ToString()))" />
+                   @bind-value="KorekcijaText"
+                   @bind-value:event="oninput"
+                   @onblur="NormalizeKorekcija" />
 
             <textarea class="form-control form-control-sm"
                       placeholder="Komentar"
-                      value="@Segment.GetKomentar(Stran)"
-                      @oninput="e => Segment.SetKomentar(Stran, e.Value?.ToString())"></textarea>
+                      @bind-value="Komentar"
+                      @bind-value:event="oninput">
+                </textarea>
         </div>
     }
 </div>
 
 @code {
-
     [Parameter] public Segment Segment { get; set; } = default!;
     [Parameter] public StranLDE Stran { get; set; }
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
 
-    private bool PrikaziKorekcijo { get; set; }
-    private void ToggleKorekcija() => PrikaziKorekcijo = !PrikaziKorekcijo;
+    private PrijavljenUporabnik user;
+    private bool PrikaziKorekcijo;
+    private string? korekcijaText;
 
-    private MozniDeficit? IzbranDeficit => Segment.IzbranDeficit(Stran);
+    private void ToggleKorekcija()
+        => PrikaziKorekcijo = !PrikaziKorekcijo;
 
-    private static decimal? ParseDecimal(string? input)
-        => decimal.TryParse(input, out var result) ? result : null;
+    private string? KorekcijaText
+    {
+        get => korekcijaText;
+        set
+        {
+            korekcijaText = value;
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                Segment.SetKorekcija(Stran, null);
+                return;
+            }
+
+            if (TryParseDecimal(value, out var result))
+            {
+                Segment.SetKorekcija(Stran, result);
+            }
+        }
+    }
+
+    private void NormalizeKorekcija(FocusEventArgs _)
+    {
+        if (string.IsNullOrWhiteSpace(korekcijaText))
+        {
+            Segment.SetKorekcija(Stran, null);
+            korekcijaText = string.Empty;
+            return;
+        }
+
+        if (TryParseDecimal(korekcijaText, out var result))
+        {
+            Segment.SetKorekcija(Stran, result);
+            korekcijaText = result.ToString(CultureInfo.CurrentCulture);
+        }
+        else
+        {
+            // povrni zadnjo veljavno vrednost iz modela
+            korekcijaText = Segment.GetKorekcija(Stran)?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+        }
+
+        StateHasChanged();
+    }
+
+    private static bool TryParseDecimal(string? input, out decimal result)
+    {
+        input = input?.Replace(',', '.');
+        return decimal.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
+    }
+
+    private string? Komentar
+    {
+        get => Segment.GetKomentar(Stran);
+        set => Segment.SetKomentar(Stran, value);
+    }
+
+    private MozniDeficit? IzbranDeficit
+        => Segment.IzbranDeficit(Stran);
+
+    protected override void OnParametersSet()
+    {
+        korekcijaText = Segment.GetKorekcija(Stran)?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Loader.RunWithLoader("Berem podatke", async () =>
+        {
+            user = await UserSessionStorage.LoadUserAsync();
+        });
+    }
 
     private string CssClassForStran(StranLDE stran) => stran switch
     {

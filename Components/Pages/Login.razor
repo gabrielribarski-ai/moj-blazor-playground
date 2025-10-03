@@ -3,8 +3,8 @@
 @using IzracunInvalidnostiBlazor.Services
 @inject NavigationManager Nav
 @inject UserSessionStorageService SessionService
-@inject IConfiguration Config
-
+@inject IConfiguration _config
+@inject LoaderService Loader
 @code {
     protected override async Task OnInitializedAsync()
     {
@@ -24,12 +24,6 @@
                 // Lahko dodaš še inicializacijo, če želiš
             }
         };
-
-
-        var loader = new OcenjevalniModelDBLoader(Config);
-        await loader.LoadPogojSeznamAsync(user.OcenjevalniModel);
-        await loader.LoadSegmentSeznamAsync(user.OcenjevalniModel);
-
         await SessionService.SaveUserAsync(user);
 
         // Preusmeri na glavno stran

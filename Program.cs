@@ -35,7 +35,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<PogojAtributNaborLoader>();
 }*/
 
-builder.Services.AddScoped<OcenjevalniModelDBLoader>();
+builder.Services.AddScoped<DataDBLoader>();
 builder.Services.AddScoped<UserSessionStorageService>();
 builder.Services.AddScoped<LoaderService>();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
