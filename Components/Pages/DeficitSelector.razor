@@ -11,7 +11,7 @@
     @foreach (var def in MozniZaStran)
     {
         <option value="@def.IzracunaniOdstotek?.ToString(CultureInfo.InvariantCulture)">
-            @def.IzbiraOpis @(def.IzracunaniOdstotek?.ToString("0.##", CultureInfo.CurrentCulture)) %
+            @def.IzbiraOpis
         </option>
     }
 </select>

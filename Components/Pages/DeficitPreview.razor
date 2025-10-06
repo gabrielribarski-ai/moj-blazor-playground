@@ -1,7 +1,7 @@
 ﻿@using CustomTypeExtensions
 @using IzracunInvalidnostiBlazor.Models
 
-@if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
+@if (Segment.SimetrijaTelesa == SimetrijaEnum.E)
 {
     <ul>
         @foreach (var def in Segment.OpcijeE)
@@ -26,5 +26,5 @@ else
 
 @code {
 
-    [Parameter] public Segment Segment { get; set; }
+    [Parameter] public Models.DelTelesa Segment { get; set; }
 }

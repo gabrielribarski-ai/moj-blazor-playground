@@ -7,66 +7,65 @@ namespace IzracunInvalidnostiBlazor.Models
     {
         public List<Pogoj> PogojSeznam { get; set; }
 
-        public List<Segment> SegmentSeznam { get; set; }
+        public List<DelTelesa> DelTelesaSeznam { get; set; }
         //trenutni segment na katerem smo oz. ga prikazujemo
-        public Segment TrenutniSegment { get; set; }
+        public DelTelesa TrenutniDelTelesa { get; set; }
 
         // Ko ocenimo segment/del telesa, ga dodamo v ta seznam
-
 
         public List<Atribut> AtributiZaPrikaz
         {
             get
             {
-                var filtrirani = TrenutniSegment?.Atributi?
-                    .Where(x => x.SegmentId == TrenutniSegment.SegmentId)
+                var filtrirani = TrenutniDelTelesa?.Atributi?
+                    .Where(x => x.DelTelesaId == TrenutniDelTelesa.DelTelesaId)
                     .ToList();
 
                 return (filtrirani == null || filtrirani.Count == 0) ? null : filtrirani;
             }
         }
 
-        public List<Segment> SegmentiZaPrikaz
+        public List<DelTelesa> DeliTelesaZaPrikazSeznam
         {
             get
             {
-                if (SegmentSeznam == null)
+                if (DelTelesaSeznam == null)
                     return null;
-                return SegmentSeznam
-                    .Where(x => x.NadsegmentId == TrenutniSegment?.SegmentId)
+                return DelTelesaSeznam
+                    .Where(x => x.NadrejeniId == TrenutniDelTelesa?.DelTelesaId)
                     .ToList();
             }
         }
 
 
-        public List<Segment> GetSegmentChildren(string segmentId)
+        public List<DelTelesa> GetDelTelesaChildren(string segmentId)
         {
-            return SegmentSeznam
-                .Where(s => s.NadsegmentId == segmentId)
+            return DelTelesaSeznam
+                .Where(s => s.NadrejeniId == segmentId)
                 .ToList();
         }
 
 
-        public Segment? GetParentSegment(string segmentId)
+        public DelTelesa? GetNadrejeniDelTelesa(string delTelesaId)
         {
-            var current = SegmentSeznam.FirstOrDefault(s => s.SegmentId == segmentId);
-            if (current?.NadsegmentId == null) return null;
+            var current = DelTelesaSeznam.FirstOrDefault(s => s.DelTelesaId == delTelesaId);
+            if (current?.NadrejeniId == null) return null;
 
-            return SegmentSeznam.FirstOrDefault(s => s.SegmentId == current.NadsegmentId);
+            return DelTelesaSeznam.FirstOrDefault(s => s.DelTelesaId == current.NadrejeniId);
         }
 
 
-        public List<Segment> BreadcrumbPath
+        public List<DelTelesa> BreadcrumbPath
         {
             get
             {
-                var path = new List<Segment>();
-                var current = TrenutniSegment;
+                var path = new List<DelTelesa>();
+                var current = TrenutniDelTelesa;
 
                 while (current != null)
                 {
                     path.Insert(0, current);
-                    current = GetParentSegment(current.SegmentId);
+                    current = GetNadrejeniDelTelesa(current.DelTelesaId);
                 }
 
                 return path;
@@ -74,9 +73,9 @@ namespace IzracunInvalidnostiBlazor.Models
         }
 
 
-        public async Task SetTrenutniSegment(string trenutniSegmentId)
+        public async Task SetTrenutniDelTelesa(string trenutniDelTelesaId)
         {
-            this.TrenutniSegment = SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
+            this.TrenutniDelTelesa = DelTelesaSeznam.Where(x => x.DelTelesaId == trenutniDelTelesaId).First();
 
             //this.ocenjevalniModel.trenutniSegment = ocenjevalniModel.SegmentSeznam.Where(x => x.SegmentId == trenutniSegmentId).First();
         }
@@ -84,17 +83,17 @@ namespace IzracunInvalidnostiBlazor.Models
 
 
 
-        public List<Segment> GetRootSegments()
+        public List<DelTelesa> GetRootDeliTelesa()
         {
-            return SegmentSeznam
-                .Where(s => s.NadsegmentId == null)
+            return DelTelesaSeznam
+                .Where(s => s.NadrejeniId == null)
                 .ToList();
         }
 
-        public Segment GetRootSegment()
+        public DelTelesa GetRoot()
         {
-            var s = SegmentSeznam
-                .Where(s => s.NadsegmentId == null)
+            var s = DelTelesaSeznam
+                .Where(s => s.NadrejeniId == null)
                 .First();
             return s;
         }

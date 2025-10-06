@@ -50,20 +50,20 @@ else
 @code {
 
 
-    private Segment? currentSegment;
-    private List<Segment> children = new();
-    private List<Segment> breadcrumb = new();
+    private Models.DelTelesa? currentSegment;
+    private List<Models.DelTelesa> children = new();
+    private List<Models.DelTelesa> breadcrumb = new();
     private OcenjevalniModel ocenjevalniModel;
 
 
     protected async override void OnInitialized()
     {
         //await ocenjevalniModelLoader.segment();
-        currentSegment = ocenjevalniModel.GetRootSegments().FirstOrDefault(); // npr. TELO
+        currentSegment = ocenjevalniModel.GetRootDeliTelesa().FirstOrDefault(); // npr. TELO
         UpdateView();
     }
 
-    private void NavigateTo(Segment segment)
+    private void NavigateTo(Models.DelTelesa segment)
     {
         currentSegment = segment;
         UpdateView();
@@ -71,7 +71,7 @@ else
 
     private void UpdateView()
     {
-        children = ocenjevalniModel.GetSegmentChildren(currentSegment!.SegmentId);
+        children = ocenjevalniModel.GetDelTelesaChildren(currentSegment!.DelTelesaId);
         breadcrumb = ocenjevalniModel.BreadcrumbPath; // FIX: BreadcrumbPath is a property, not a method
     }
 

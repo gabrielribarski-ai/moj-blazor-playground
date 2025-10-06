@@ -4,7 +4,7 @@
     <thead>
         <tr>
             <th>Atribut</th>
-            @if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
+            @if (DelTelesa.SimetrijaTelesa == SimetrijaEnum.E)
             {
                 <th>E</th>
             }
@@ -17,12 +17,12 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var atribut in Segment.Atributi)
+        @foreach (var atribut in DelTelesa.Atributi)
         {
             <tr>
                 <td>@atribut.Opis</td>
 
-                @if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
+                @if (DelTelesa.SimetrijaTelesa == SimetrijaEnum.E)
                 {
                     <td>
                         <InputNumber Value="atribut.Ocena.VrednostE"
@@ -58,7 +58,7 @@
 </table>
 
 @code {
-    [Parameter] public Segment Segment { get; set; }
+    [Parameter] public DelTelesa DelTelesa { get; set; }
     [Parameter] public EventCallback<FazaOcenjevanjaEnum> FazaChanged { get; set; }
 
 
@@ -84,14 +84,14 @@
     private async Task OnValuesMaybeComplete()
     {
         bool allSet =
-            Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E
-            ? Segment.Atributi.All(a => a.Ocena?.VrednostE.HasValue == true)
-            : Segment.Atributi.All(a => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true);
+            DelTelesa.SimetrijaTelesa == SimetrijaEnum.E
+            ? DelTelesa.Atributi.All(a => a.Ocena?.VrednostE.HasValue == true)
+            : DelTelesa.Atributi.All(a => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true);
 
         if (allSet)
         {
-            Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
-            await FazaChanged.InvokeAsync(Segment.FazaOcenjevanja);
+            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
+            await FazaChanged.InvokeAsync(DelTelesa.FazaOcenjevanja);
         }
     }
 

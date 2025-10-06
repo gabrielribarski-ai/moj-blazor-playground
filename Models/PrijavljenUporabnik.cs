@@ -9,55 +9,50 @@ public class PrijavljenUporabnik
     public DateTime CasPrijave { get; set; } = DateTime.Now;
     public string StDokumenta { get; set; }
     public Pogoj IzbranPogoj { get; set; }
-
-
     public OcenjevalniModel OcenjevalniModel { get; set; } = new();
-
-    public List<Segment> OcenjenSegmentSeznam { get; set; }
-
+    public List<DelTelesa> OcenaSeznam { get; set; }
 
     public async Task SetIzbranPogoj(string pogojId)
     {
         IzbranPogoj = new Pogoj();
         IzbranPogoj = OcenjevalniModel.PogojSeznam.Where(x => x.PogojId == pogojId).First();
         // najprej kaže na root element
-        await OcenjevalniModel.SetTrenutniSegment(GetRootSegment().SegmentId);
+        await OcenjevalniModel.SetTrenutniDelTelesa(GetRoot().DelTelesaId);
     }
 
     public async Task VpogledVOcenjeniSegment(string ocenjeniSegmentId)
     {
-        this.OcenjevalniModel.TrenutniSegment = OcenjenSegmentSeznam.Where(x => x.SegmentId == ocenjeniSegmentId).First();
+        this.OcenjevalniModel.TrenutniDelTelesa = OcenaSeznam.Where(x => x.DelTelesaId == ocenjeniSegmentId).First();
     }
-
 
     public decimal? SkupnaOcena
     {
         get
         {
-            if (OcenjenSegmentSeznam == null || OcenjenSegmentSeznam.Count == 0)
+            if (OcenaSeznam == null || OcenaSeznam.Count == 0)
                 return null;
 
-            var vsota = OcenjenSegmentSeznam
-                .SelectMany(seg => seg.MozniDeficitNabor.Where(d => d.JeIzbran))
+            var vsota = OcenaSeznam
+                .SelectMany(seg => seg.MozniDeficitSeznam.Where(d => d.JeIzbran))
                 .Sum(d => d.IzracunaniOdstotek ?? 0m);
 
             return Math.Min(vsota, 100m);
         }
     }
 
-    public void DodajMedOcenjeneSegmente(Segment segment)
+    public void DodajMedOcenjene(DelTelesa delTelesa)
     {
-        if (OcenjenSegmentSeznam == null)
-            OcenjenSegmentSeznam = new List<Segment>();
-        var SegmentClone = (Segment)segment.Clone();
-        if (!OcenjenSegmentSeznam.Any(s => s.SegmentId == SegmentClone.SegmentId))
-            OcenjenSegmentSeznam.Add(SegmentClone);
+        if (OcenaSeznam == null)
+            OcenaSeznam = new List<DelTelesa>();
+        var DelTelesaClone = (DelTelesa)delTelesa.Clone();
+        if (!OcenaSeznam.Any(s => s.DelTelesaId == DelTelesaClone.DelTelesaId))
+            OcenaSeznam.Add(DelTelesaClone);
     }
 
-    public Segment GetRootSegment()
+    public DelTelesa GetRoot()
     {
-        var s = this.OcenjevalniModel.SegmentSeznam
-            .Where(s => s.NadsegmentId == null)
+        var s = this.OcenjevalniModel.DelTelesaSeznam
+            .Where(s => s.NadrejeniId == null)
             .First();
         return s;
     }

@@ -56,7 +56,7 @@
         await Loader.RunWithLoader("Pripravljam podatke", async () =>
 
         {
-            user.OcenjevalniModel.SegmentSeznam = await DataDBLoader.LoadSegmentSeznamAsync();
+            user.OcenjevalniModel.DelTelesaSeznam = await DataDBLoader.LoadSegmentSeznamAsync();
             await DataDBLoader.PreberiInPoveziAtributeDBAsync(user.OcenjevalniModel);
             await user.SetIzbranPogoj(izbranPogojId);
             await DataDBLoader.PreberiStopnjDBAsync(user.OcenjevalniModel, izbranPogojId);

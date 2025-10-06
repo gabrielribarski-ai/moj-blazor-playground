@@ -5,53 +5,64 @@ using System.Text.Json;
 
     public static class DeficitCalculator
     {
-        public static void IzracunajMozneDeficite(Segment segment, Action<string>? logAction = null)
+    public static void IzracunajMozneDeficite(DelTelesa delTelesa, Action<string>? logAction = null)
+    {
+        // 1) agregati
+        delTelesa.IzmerjeniDeficit = new();
+        delTelesa.IzmerjeniDeficit.GibljivostSkupajL = delTelesa.Atributi.Sum(atr => atr.Ocena?.VrednostL ?? 0m);
+        delTelesa.IzmerjeniDeficit.GibljivostSkupajD = delTelesa.Atributi.Sum(atr => atr.Ocena?.VrednostD ?? 0m);
+        delTelesa.IzmerjeniDeficit.GibljivostSkupajE = delTelesa.Atributi.Sum(atr => atr.Ocena?.VrednostE ?? 0m);
+        delTelesa.IzmerjeniDeficit.StandardSkupaj = delTelesa.Atributi.Sum(atr => atr.StandardnaVrednost ?? 0m);
+
+        // 2) pripravi nabor kandidatov
+        delTelesa.MozniDeficitSeznam ??= new List<MozniDeficit>();
+        delTelesa.MozniDeficitSeznam.Clear();
+
+        // 3) vse stopnje
+        var vseStopnje = delTelesa.Atributi.SelectMany(a => a.Stopnje).ToList();
+
+        // 4) glede na simetrijo
+        if (delTelesa.SimetrijaTelesa == SimetrijaEnum.LD)
         {
-            // 1) agregati
-            segment.IzmerjeniDeficit = new();
-            segment.IzmerjeniDeficit.GibljivostSkupajL = segment.Atributi.Sum(atr => atr.Ocena?.VrednostL ?? 0m);
-            segment.IzmerjeniDeficit.GibljivostSkupajD = segment.Atributi.Sum(atr => atr.Ocena?.VrednostD ?? 0m);
-            segment.IzmerjeniDeficit.GibljivostSkupajE = segment.Atributi.Sum(atr => atr.Ocena?.VrednostE ?? 0m);
-            segment.IzmerjeniDeficit.StandardSkupaj = segment.Atributi.Sum(atr => atr.StandardnaVrednost ?? 0m);
-
-            // 2) pripravi nabor kandidatov
-            segment.MozniDeficitNabor ??= new List<MozniDeficit>();
-            segment.MozniDeficitNabor.Clear();
-
-            // 3) vse stopnje
-            var vseStopnje = segment.Atributi.SelectMany(a => a.Stopnje).ToList();
-
-            // 4) glede na simetrijo
-            if (segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD)
+            var pari = new[]
             {
-            AddIfValid(segment, IzracunInvalidnostiBlazor.Models.Enum.LS, segment.IzmerjeniDeficit.GibljivostSkupajL, segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.L, vseStopnje);
-            AddIfValid(segment, IzracunInvalidnostiBlazor.Models.Enum.DS, segment.IzmerjeniDeficit.GibljivostSkupajD, segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.D, vseStopnje);
-            AddIfValid(segment, IzracunInvalidnostiBlazor.Models.Enum.LD, segment.IzmerjeniDeficit.GibljivostSkupajL, segment.IzmerjeniDeficit.GibljivostSkupajD, StranLDE.L, vseStopnje);
-            AddIfValid(segment, IzracunInvalidnostiBlazor.Models.Enum.DL, segment.IzmerjeniDeficit.GibljivostSkupajD, segment.IzmerjeniDeficit.GibljivostSkupajL, StranLDE.D, vseStopnje);
-            }
-            else if (segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
-            {
-            AddIfValid(segment, IzracunInvalidnostiBlazor.Models.Enum.ES, segment.IzmerjeniDeficit.GibljivostSkupajE, segment.IzmerjeniDeficit.StandardSkupaj, StranLDE.E, vseStopnje);
-            }
+        (IzracunInvalidnostiBlazor.Models.Enum.LS, delTelesa.IzmerjeniDeficit.GibljivostSkupajL, delTelesa.IzmerjeniDeficit.StandardSkupaj, StranLDE.L),
+        (IzracunInvalidnostiBlazor.Models.Enum.DS, delTelesa.IzmerjeniDeficit.GibljivostSkupajD, delTelesa.IzmerjeniDeficit.StandardSkupaj, StranLDE.D),
+        (IzracunInvalidnostiBlazor.Models.Enum.LD, delTelesa.IzmerjeniDeficit.GibljivostSkupajL, delTelesa.IzmerjeniDeficit.GibljivostSkupajD, StranLDE.L),
+        (IzracunInvalidnostiBlazor.Models.Enum.DL, delTelesa.IzmerjeniDeficit.GibljivostSkupajD, delTelesa.IzmerjeniDeficit.GibljivostSkupajL, StranLDE.D)
+    };
 
-            // 5) izloči duplikate
-            segment.MozniDeficitNabor = segment.MozniDeficitNabor
+            foreach (var (tip, dejanska, referenca, stran) in pari)
+                AddIfValid(delTelesa, tip, dejanska, referenca, stran, vseStopnje);
+        }
+
+        // 5) izloči duplikate
+        delTelesa.MozniDeficitSeznam = delTelesa.MozniDeficitSeznam
                 .GroupBy(d => new { d.StranLDE, Percent = d.IzracunaniOdstotek ?? -1m, d.MoznaPrimerjava })
                 .Select(g => g.First())
                 .OrderBy(d => d.StranLDE)
                 .ThenBy(d => d.IzracunaniOdstotek)
                 .ToList();
 
-            segment.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzracunani;
-
-            if (logAction != null)
+        // 6) če je za posamezno stran samo en možen deficit, ga izberi
+        foreach (var group in delTelesa.MozniDeficitSeznam.GroupBy(d => d.StranLDE))
+        {
+            if (group.Count() == 1)
             {
-                var json = JsonSerializer.Serialize(segment);
-                logAction($"DeficitCalculator -> Segment {json}");
+                group.First().JeIzbran = true;
             }
         }
 
-        private static void AddIfValid(Segment segment, IzracunInvalidnostiBlazor.Models.Enum tip, decimal dejanska, decimal referenca, StranLDE stran, List<StopnjaDeficita> vseStopnje)
+        delTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.DeficitiIzracunani;
+
+        if (logAction != null)
+        {
+            var json = JsonSerializer.Serialize(delTelesa);
+            logAction($"DeficitCalculator -> Segment {json}");
+        }
+    }
+
+        private static void AddIfValid(DelTelesa segment, IzracunInvalidnostiBlazor.Models.Enum tip, decimal dejanska, decimal referenca, StranLDE stran, List<StopnjaDeficita> vseStopnje)
         {
             if (referenca == 0m) return;
 
@@ -59,13 +70,15 @@ using System.Text.Json;
             if (deficit >= 100m) return;
 
             var odstotek = IzracunajInvalidnost(deficit, vseStopnje);
+            if (odstotek == 0m) return;
 
-            segment.MozniDeficitNabor.Add(new MozniDeficit
+
+        segment.MozniDeficitSeznam.Add(new MozniDeficit
             {
                 MoznaPrimerjava = tip,
                 Deficit = deficit,
                 StranLDE = stran,
-                IzbiraOpis = $"{tip.GetDescription()}: {odstotek}",
+                IzbiraOpis = $"{tip.GetDescription()}: {odstotek}" + " %",
                 IzracunaniOdstotek = odstotek
             });
         }

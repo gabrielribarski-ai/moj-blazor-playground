@@ -5,14 +5,15 @@
 @inject UserSessionStorageService UserSessionStorage
 @using CustomTypeExtensions
 @using System.Globalization
+@inject IConfiguration _config
 
 <div class="deficit-block @CssClassForStran(Stran)">
     <h6 class="fw-bold">@NaslovZaStran(Stran)</h6>
 
     <div class="d-flex align-items-center gap-2">
-        <DeficitSelector @key="@($"{Segment.SegmentId}-{Stran}")"
+        <DeficitSelector @key="@($"{DelTelesa.DelTelesaId}-{Stran}")"
                          Stran="Stran"
-                         MozniZaStran="Segment.MozniDeficitNabor.Where(d => d.StranLDE == Stran)"
+                         MozniZaStran="DelTelesa.MozniDeficitSeznam.Where(d => d.StranLDE == Stran)"
                          OnSelectionChanged="OnSelectionChanged" />
 
         @if (IzbranDeficit != null)
@@ -45,16 +46,15 @@
 </div>
 
 @code {
-    [Parameter] public Segment Segment { get; set; } = default!;
+    [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
     [Parameter] public StranLDE Stran { get; set; }
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
 
-    private PrijavljenUporabnik user;
     private bool PrikaziKorekcijo;
     private string? korekcijaText;
 
-    private void ToggleKorekcija()
-        => PrikaziKorekcijo = !PrikaziKorekcijo;
+    private void ToggleKorekcija()=> PrikaziKorekcijo = !PrikaziKorekcijo;
+    private MozniDeficit? IzbranDeficit => DelTelesa.IzbranDeficit(Stran);
 
     private string? KorekcijaText
     {
@@ -65,13 +65,13 @@
 
             if (string.IsNullOrWhiteSpace(value))
             {
-                Segment.SetKorekcija(Stran, null);
+                DelTelesa.SetKorekcija(Stran, null);
                 return;
             }
 
             if (TryParseDecimal(value, out var result))
             {
-                Segment.SetKorekcija(Stran, result);
+                DelTelesa.SetKorekcija(Stran, result);
             }
         }
     }
@@ -80,20 +80,20 @@
     {
         if (string.IsNullOrWhiteSpace(korekcijaText))
         {
-            Segment.SetKorekcija(Stran, null);
+            DelTelesa.SetKorekcija(Stran, null);
             korekcijaText = string.Empty;
             return;
         }
 
         if (TryParseDecimal(korekcijaText, out var result))
         {
-            Segment.SetKorekcija(Stran, result);
+            DelTelesa.SetKorekcija(Stran, result);
             korekcijaText = result.ToString(CultureInfo.CurrentCulture);
         }
         else
         {
             // povrni zadnjo veljavno vrednost iz modela
-            korekcijaText = Segment.GetKorekcija(Stran)?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+            korekcijaText = DelTelesa.GetKorekcija(Stran)?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
         }
 
         StateHasChanged();
@@ -107,25 +107,15 @@
 
     private string? Komentar
     {
-        get => Segment.GetKomentar(Stran);
-        set => Segment.SetKomentar(Stran, value);
+        get => DelTelesa.GetKomentar(Stran);
+        set => DelTelesa.SetKomentar(Stran, value);
     }
-
-    private MozniDeficit? IzbranDeficit
-        => Segment.IzbranDeficit(Stran);
 
     protected override void OnParametersSet()
     {
-        korekcijaText = Segment.GetKorekcija(Stran)?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+        korekcijaText = DelTelesa.GetKorekcija(Stran)?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await Loader.RunWithLoader("Berem podatke", async () =>
-        {
-            user = await UserSessionStorage.LoadUserAsync();
-        });
-    }
 
     private string CssClassForStran(StranLDE stran) => stran switch
     {
@@ -134,6 +124,7 @@
         StranLDE.E => "stran-e",
         _ => ""
     };
+
 
     private string NaslovZaStran(StranLDE stran) => stran switch
     {

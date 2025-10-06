@@ -46,14 +46,14 @@ namespace IzracunInvalidnostiBlazor.Services
             return result;
         }
 
-        public async Task<List<Segment>> LoadSegmentSeznamAsync( )
+        public async Task<List<Models.DelTelesa>> LoadSegmentSeznamAsync( )
         {
-            var result = new List<Segment>();
+            var result = new List<Models.DelTelesa>();
 
             await using var conn = new OracleConnection(connStr);
             await conn.OpenAsync();
 
-            const string sql = "SELECT * FROM VW_B1_SEGMENT";
+            const string sql = "SELECT * FROM VW_B1_DEL_TELESA";
             await using var cmd = new OracleCommand(sql, conn);
             using var reader = await cmd.ExecuteReaderAsync();
 
@@ -62,13 +62,13 @@ namespace IzracunInvalidnostiBlazor.Services
 
             foreach (DataRow dr in dt.Rows)
             {
-                result.Add(new Segment
+                result.Add(new Models.DelTelesa
                 {
-                    SegmentId = dr["SEGMENT_ID"].ToString(),
+                    DelTelesaId = dr["DEL_TELESA_ID"].ToString(),
                     Opis = dr["OPIS"].ToString(),
-                    SegmentTreePath = dr["Segment_Tree_Path"].ToString(),
-                    NadsegmentId = string.IsNullOrEmpty(dr["NADREJENI_ID"].ToString()) ? null : dr["NADREJENI_ID"].ToString(),
-                    SimetrijaTelesa = dr["LDE"].ToString() == "LD" ? SimetrijaTelesaEnum.LD : SimetrijaTelesaEnum.E,
+                    DelTelesaTreePath = dr["DEL_TELESA_Tree_Path"].ToString(),
+                    NadrejeniId = string.IsNullOrEmpty(dr["NADREJENI_ID"].ToString()) ? null : dr["NADREJENI_ID"].ToString(),
+                    SimetrijaTelesa = dr["LDE"].ToString() == "LD" ? SimetrijaEnum.LD : SimetrijaEnum.E,
                     Atributi = new List<Atribut>(),
                     ImaOcenjevalneAtribute = dr["st_kriterijev"].ToString() != "0",
                 });
@@ -119,7 +119,7 @@ namespace IzracunInvalidnostiBlazor.Services
 
         public Atribut? FindAtributById(OcenjevalniModel model, string atributId)
         {
-            return model.SegmentSeznam
+            return model.DelTelesaSeznam
                 .Where(s => s.ImaOcenjevalneAtribute && s.Atributi != null)
                 .SelectMany(s => s.Atributi)
                 .FirstOrDefault(a => a.AtributId == atributId);
@@ -167,7 +167,7 @@ namespace IzracunInvalidnostiBlazor.Services
             await using var conn = new OracleConnection(connStr);
             await conn.OpenAsync();
 
-            const string q = "SELECT ID, SEGMENT_ID, STANDARD, ENOTA, TIP_MERITVE, MOZNA_PRIMERJAVA, OPIS from B1_ATRIBUTI";
+            const string q = "SELECT ID, DEL_TELESA_ID, STANDARD, ENOTA, TIP_MERITVE, MOZNA_PRIMERJAVA, OPIS from B1_ATRIBUTI";
             await using var cmd = new OracleCommand(q, conn);
 
             var dt = new DataTable();
@@ -176,12 +176,12 @@ namespace IzracunInvalidnostiBlazor.Services
                 dt.Load(reader, LoadOption.PreserveChanges);
             }
 
-            foreach (Segment segment in model.SegmentSeznam)
+            foreach (Models.DelTelesa segment in model.DelTelesaSeznam)
             {
                 if (segment.ImaOcenjevalneAtribute)
                 {
                     var atributiRows = dt.AsEnumerable()
-                        .Where(x => x["segment_id"].ToString() == segment.SegmentId);
+                        .Where(x => x["del_telesa_id"].ToString() == segment.DelTelesaId);
 
                     segment.Atributi = new List<Atribut>();
 
@@ -191,7 +191,7 @@ namespace IzracunInvalidnostiBlazor.Services
                         {
                             AtributId = dr["ID"].ToString(),
                             Opis = dr["OPIS"].ToString(),
-                            SegmentId = dr["SEGMENT_ID"].ToString(),
+                            DelTelesaId = dr["DEL_TELESA_ID"].ToString(),
                             StandardnaVrednost = dr["STANDARD"]?.AsDecimal(),
                             TipMeritve = dr["TIP_MERITVE"].ToString() == "NUM" ? TipMeritveEnum.NUM : TipMeritveEnum.BOOL,
                             Enota = dr["ENOTA"].ToString(),

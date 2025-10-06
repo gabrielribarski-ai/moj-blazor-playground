@@ -16,7 +16,7 @@
 
 <h6>Izberi del telesa za ocenjevanje</h6>
 
-@if (user?.OcenjevalniModel?.TrenutniSegment != null)
+@if (user?.OcenjevalniModel?.TrenutniDelTelesa != null)
 {
     <div class="row">
         <!-- Leva stran: glavni del -->
@@ -29,7 +29,7 @@
 
                     <span class="crumb @(isLast ? "active" : "")"
                           @onclick="@(() => NavigirajNaSegment(korak))"
-                          @key="korak.SegmentId">
+                          @key="korak.DelTelesaId">
                         @korak.Opis
                     </span>
 
@@ -44,18 +44,18 @@
             <!-- Atributi -->
             @if (user?.OcenjevalniModel?.AtributiZaPrikaz?.Count > 0)
             {
-                <OcenjevalniAtribut Segment="user?.OcenjevalniModel.TrenutniSegment"
-                                    @key="user?.OcenjevalniModel?.TrenutniSegment?.SegmentId"
+                <OcenjevalniAtribut DelTelesa="user?.OcenjevalniModel.TrenutniDelTelesa"
+                                    @key="user?.OcenjevalniModel?.TrenutniDelTelesa?.DelTelesaId"
                                     OnOcenaPotrjena="OnSegmentPotrjen" />
             }
 
             <!-- Podsegmenti -->
             <div class="podsegment-list mb-4">
-                @foreach (var seg in user?.OcenjevalniModel?.SegmentiZaPrikaz)
+                @foreach (var seg in user?.OcenjevalniModel?.DeliTelesaZaPrikazSeznam)
                 {
                     <div class="card podsegment-card mb-2"
                          @onclick="() => NavigirajNaSegment(seg)"
-                         @key="seg.SegmentId">
+                         @key="seg.DelTelesaId">
                         <div class="card-body d-flex align-items-center">
                             <i class="bi bi-diagram-3 me-2 text-primary"></i>
                             <span>@seg.Opis</span>
@@ -67,16 +67,16 @@
 
         <!-- Desna stran: že ocenjeni segmenti -->
         <div class="col-md-6 small-font">
-            @if (user?.OcenjenSegmentSeznam?.Any() == true)
+            @if (user?.OcenaSeznam?.Any() == true)
             {
                 <div class="p-3 border rounded bg-light sticky-top" style="top: 1rem;">
                     <h5>Že ocenjeni segmenti</h5>
                     <ul class="list-group small">
-                        @foreach (var seg in user?.OcenjenSegmentSeznam)
+                        @foreach (var seg in user?.OcenaSeznam)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><b>@seg.SegmentTreePath</b></span>
-                                <span>@seg.SkupniOdstotekSegmenta %</span>
+                                <span><b>@seg.DelTelesaTreePath</b></span>
+                                <span>@seg.SkupniOdstotek %</span>
                                 <button class="btn btn-sm btn-outline-primary"
                                         @onclick="() => VpogledVOcenjeniSegment(seg)">
                                     Vpogled
@@ -94,67 +94,40 @@
         </div>
     </div>
 }
-
-
 @code {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private PrijavljenUporabnik user;
+   private PrijavljenUporabnik user;
     private bool _initialized = false;
-    private Segment? TrenutniSegment;
-
-    private List<Segment> OcenjeniSegmenti = new();
+    private DelTelesa? TrenutniDelTelesa;
+    private List<DelTelesa> OcenjeniDeliTelesa = new();
     private decimal SkupnaInvalidnost;
 
-    private List<Segment> BreadcrumbPath = new();
+    private List<DelTelesa> BreadcrumbPath = new();
 
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
+        await Loader.RunWithLoader("Berem podatke", async () =>
         {
-
-            await Loader.RunWithLoader("Berem podatke", async () =>
-            {
-                user = await UserSessionStorage.LoadUserAsync();
-                //ocenjevalniModel = user.OcenjevalniModel;   
-            });
-
-            //ocenjevalniModel = await ocenjevalniModel.ReadFromSessionStorage(SessionStorage);
-            StateHasChanged(); // Optional; OnAfterRenderAsync usually doesn’t need it after firstRender
-        }
+            user = await UserSessionStorage.LoadUserAsync();
+        });
     }
 
-
-
-    private async void OnSegmentPotrjen(Segment seg)
+    private async void OnSegmentPotrjen(Models.DelTelesa seg)
     {
-        user.DodajMedOcenjeneSegmente(seg);
+        user.DodajMedOcenjene(seg);
         await Loader.RunWithLoader("Shranjujem podatke", async () =>
         {
-            await user.OcenjevalniModel.SetTrenutniSegment(user?.OcenjevalniModel.GetRootSegment().SegmentId);
-
+            await user.OcenjevalniModel.SetTrenutniDelTelesa(user?.OcenjevalniModel.GetRoot().DelTelesaId);
             await UserSessionStorage.SaveUserAsync(user);
         });
     }
 
 
-    private async Task NavigirajNaSegment(Segment segment)
+    private async Task NavigirajNaSegment(Models.DelTelesa segment)
     {
-        await user.OcenjevalniModel.SetTrenutniSegment(segment.SegmentId);
+        await user.OcenjevalniModel.SetTrenutniDelTelesa(segment.DelTelesaId);
         await user.OcenjevalniModel.SaveSessionToStorage(SessionStorage);
         var atr = user.OcenjevalniModel?.AtributiZaPrikaz;
         if (atr?.Count > 0)
@@ -165,11 +138,10 @@
     }
 
 
-    private async Task VpogledVOcenjeniSegment(Segment seg)
+    private async Task VpogledVOcenjeniSegment(Models.DelTelesa seg)
     {
-        user.VpogledVOcenjeniSegment(seg.SegmentId);
+        user.VpogledVOcenjeniSegment(seg.DelTelesaId);
         seg.FazaOcenjevanja = FazaOcenjevanjaEnum.Vpogled;
-
         await user.OcenjevalniModel.SaveSessionToStorage(SessionStorage);
     }
 

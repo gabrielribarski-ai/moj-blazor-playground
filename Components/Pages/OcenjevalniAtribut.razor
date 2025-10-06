@@ -12,16 +12,16 @@
     <!-- 1. Vnos atributov -->
 <div class="p-3 border rounded">
 
-    <span class="segment-atribut-title">@Segment.Opis</span>
+    <span class="segment-atribut-title">@DelTelesa.Opis</span>
 
     <!-- 1. Vnos atributov -->
-    <AtributEditor Segment="Segment" FazaChanged="OnFazaChanged" />
+    <AtributEditor DelTelesa="DelTelesa" FazaChanged="OnFazaChanged" />
 
     <!-- 2. Gumb Izračunaj -->
-    @if (Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.OceneSoVnesene
-        || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzbrani
-        || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzracunani
-        || Segment.FazaOcenjevanja == FazaOcenjevanjaEnum.Vpogled
+    @if (DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.OceneSoVnesene
+        || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzbrani
+        || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzracunani
+        || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.Vpogled
     )
     @*@if (AliSoOceneVnesene())*@
     {
@@ -33,18 +33,18 @@
     }
 
     <!-- 3. Dropdowni + debug -->
-    @if (Segment.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzracunani, FazaOcenjevanjaEnum.Vpogled))
+    @if (DelTelesa.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzracunani, FazaOcenjevanjaEnum.Vpogled))
     {
         <div class="deficit-selector-list">
             @{
-                var strani = Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD
+                var strani = DelTelesa.SimetrijaTelesa == SimetrijaEnum.LD
                 ? new[] { StranLDE.L, StranLDE.D }
                 : new[] { StranLDE.E };
             }
 
             @foreach (var stran in strani)
             {
-                <DeficitWithCorrection Segment="Segment"
+                <DeficitWithCorrection DelTelesa="DelTelesa"
                                        Stran="@stran"
                                        OnSelectionChanged="OnDeficitChanged" />
             }
@@ -67,10 +67,10 @@
             <div class="card card-body mt-2">
                 <h6>Debug podatki</h6>
                 <ul>
-                    <li>Standard skupaj: @Segment.IzmerjeniDeficit.StandardSkupaj</li>
-                    <li>Gibljivost L: @Segment.IzmerjeniDeficit.GibljivostSkupajL</li>
-                    <li>Gibljivost D: @Segment.IzmerjeniDeficit.GibljivostSkupajD</li>
-                    <li>Gibljivost E: @Segment.IzmerjeniDeficit.GibljivostSkupajE</li>
+                    <li>Standard skupaj: @DelTelesa.IzmerjeniDeficit.StandardSkupaj</li>
+                    <li>Gibljivost L: @DelTelesa.IzmerjeniDeficit.GibljivostSkupajL</li>
+                    <li>Gibljivost D: @DelTelesa.IzmerjeniDeficit.GibljivostSkupajD</li>
+                    <li>Gibljivost E: @DelTelesa.IzmerjeniDeficit.GibljivostSkupajE</li>
                 </ul>
                 <h6>Možni deficiti</h6>
                 <table class="table table-sm">
@@ -83,7 +83,7 @@
                         </tr>
                         </thead>
                     <tbody>
-                        @foreach (var d in Segment.MozniDeficitNabor)
+                        @foreach (var d in DelTelesa.MozniDeficitSeznam)
                         {
                             <tr>
                                 <td>@d.StranLDE</td>
@@ -101,8 +101,8 @@
 </div>
 @code {
 
-    [Parameter] public Segment Segment { get; set; } = default!;
-    [Parameter] public EventCallback<Segment> OnOcenaPotrjena { get; set; }
+    [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
+    [Parameter] public EventCallback<DelTelesa> OnOcenaPotrjena { get; set; }
 
     private bool ShowDebug = false;
 
@@ -117,23 +117,23 @@
     private void OnDeficitChanged((StranLDE stran, decimal? val) change)
     {
         // Počisti prejšnje za dano stran
-        Segment.ClearIzberiMozniDeficit(change.stran);
+        DelTelesa.ClearIzberiMozniDeficit(change.stran);
 
         // Označi novo, če obstaja
         if (change.val.HasValue)
         {
-            Segment.IzberiMozniDeficit(change.stran, change.val.Value); 
+            DelTelesa.IzberiMozniDeficit(change.stran, change.val.Value);
         }
     }
 
     private bool LahkoPotrdi()
     {
-        if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.LD)
-            return Segment.IzbranDeficitL != null &&
-                   Segment.IzbranDeficitD != null;
+        if (DelTelesa.SimetrijaTelesa == SimetrijaEnum.LD)
+            return DelTelesa.IzbranDeficitL != null &&
+                   DelTelesa.IzbranDeficitD != null;
 
-        if (Segment.SimetrijaTelesa == SimetrijaTelesaEnum.E)
-            return Segment.IzbranDeficitE != null;
+        if (DelTelesa.SimetrijaTelesa == SimetrijaEnum.E)
+            return DelTelesa.IzbranDeficitE != null;
 
         return false;
     }
@@ -150,7 +150,7 @@
 
     private void IzracunajMozneDeficite()
     {
-        DeficitCalculator.IzracunajMozneDeficite(Segment, msg => Logger.LogInformation(msg));
+        DeficitCalculator.IzracunajMozneDeficite(DelTelesa , msg => Logger.LogInformation(msg));
     }
 
 
@@ -158,23 +158,23 @@
 
     private void OnFazaChanged(FazaOcenjevanjaEnum novaFaza)
     {
-        Segment.FazaOcenjevanja = novaFaza;
+        DelTelesa.FazaOcenjevanja = novaFaza;
         StateHasChanged(); // rerender parent
     }
 
 
     private bool AliSoOceneVnesene()
     {
-        bool b = Segment.Atributi.All(a =>
-             Segment.SimetrijaTelesa switch
+        bool b = DelTelesa.Atributi.All(a =>
+             DelTelesa.SimetrijaTelesa switch
              {
-                 SimetrijaTelesaEnum.LD => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true,
-                 SimetrijaTelesaEnum.E => a.Ocena?.VrednostE.HasValue == true,
+                 SimetrijaEnum.LD => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true,
+                 SimetrijaEnum.E => a.Ocena?.VrednostE.HasValue == true,
                  _ => false
              });
 
         if (b)
-            Segment.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
+            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
         return b;
     }
    
@@ -182,13 +182,13 @@
   private async Task PotrdiIzracunanDeficit()
   {
       //Segment.ClearIzberiMozniDeficit();
-      await OnOcenaPotrjena.InvokeAsync(Segment);
+        await OnOcenaPotrjena.InvokeAsync(DelTelesa);
   }
 
 
     protected override async Task OnInitializedAsync()
     {
-        foreach (var atr in Segment.Atributi)
+        foreach (var atr in DelTelesa.Atributi)
         {
             if (atr.Ocena == null)
                 atr.Ocena = new();
@@ -198,8 +198,8 @@
 
     private void log_segment()
     {
-        var json = JsonSerializer.Serialize(Segment, JsonOptions.Value.JsonSerializerOptions);
-        Logger.LogInformation("OcenjevalniAtribut.razor->Segment {json}", json);
+        var json = JsonSerializer.Serialize(DelTelesa, JsonOptions.Value.JsonSerializerOptions);
+        Logger.LogInformation("OcenjevalniAtribut.razor->DelTelesa {json}", json);
     }
 
 

@@ -15,10 +15,11 @@ namespace IzracunInvalidnostiBlazor
         public List<StopnjaDeficita> Stopnje { get; set; } = new();
 
         public string AtributId { get; set; }
-        public string SegmentId { get; set; }
+        public string DelTelesaId { get; set; }
         public string Opis { get; set; } = string.Empty;
         public  TipMeritveEnum TipMeritve { get; set; } = TipMeritveEnum.NUM;
         public string Enota { get; set; } = string.Empty;
 
     }
 }
+

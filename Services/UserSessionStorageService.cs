@@ -36,7 +36,7 @@ namespace IzracunInvalidnostiBlazor.Services
         {
             if (CurrentUser == null) return;
             var m = CurrentUser.OcenjevalniModel ??= new OcenjevalniModel();
-            m.SegmentSeznam = await _data.LoadSegmentSeznamAsync();
+            m.DelTelesaSeznam = await _data.LoadSegmentSeznamAsync();
             await _data.PreberiInPoveziAtributeDBAsync(m);
             await CurrentUser.SetIzbranPogoj(pogojId);
             await _data.LoadStopnjeAsync(m, pogojId);
