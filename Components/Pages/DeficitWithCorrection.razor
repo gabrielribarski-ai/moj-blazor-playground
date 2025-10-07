@@ -14,47 +14,62 @@
         <DeficitSelector @key="@($"{DelTelesa.DelTelesaId}-{Stran}")"
                          Stran="Stran"
                          MozniZaStran="DelTelesa.MozniDeficitSeznam.Where(d => d.StranLDE == Stran)"
-                         OnSelectionChanged="OnSelectionChanged" />
+                         OnSelectionChanged="OnSelectionChanged"
+                         Disabled="@(FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno))" />
 
-        @if (IzbranDeficit != null)
+        @if (IzbranDeficit != null && (!FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno)))
         {
             <button class="btn btn-link btn-sm p-0 ms-1 text-secondary"
                     title="Popravi"
-                    @onclick="ToggleKorekcija">
-                ✎
+                    @onclick="ToggleKorekcija">✎
             </button>
         }
     </div>
 
     @if (PrikaziKorekcijo && IzbranDeficit != null)
     {
-        <div class="mt-2 ms-4 p-2 border rounded bg-light">
+        <div class="mt-2 ms-3 ps-2 border-start border-3 border-warning-subtle">
             <input type="text"
                    class="form-control form-control-sm mb-2"
                    placeholder="Ročni odstotek"
                    @bind-value="KorekcijaText"
                    @bind-value:event="oninput"
-                   @onblur="NormalizeKorekcija" />
+                   @onblur="NormalizeKorekcija"
+                   disabled="@(FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno))" />
 
             <textarea class="form-control form-control-sm"
+                      rows="2"
                       placeholder="Komentar"
                       @bind-value="Komentar"
-                      @bind-value:event="oninput">
+                      @bind-value:event="oninput"
+                      readonly="@(FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno))">
                 </textarea>
         </div>
     }
 </div>
 
+
 @code {
     [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
     [Parameter] public StranLDE Stran { get; set; }
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
+    [Parameter] public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; }
 
     private bool PrikaziKorekcijo;
     private string? korekcijaText;
 
     private void ToggleKorekcija()=> PrikaziKorekcijo = !PrikaziKorekcijo;
     private MozniDeficit? IzbranDeficit => DelTelesa.IzbranDeficit(Stran);
+
+    protected override void OnParametersSet()
+    {
+        var korekcija = DelTelesa.GetKorekcija(Stran);
+        korekcijaText = korekcija?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+
+        // če obstaja korekcija, naj bo polje odprto
+        PrikaziKorekcijo = korekcija.HasValue;
+    }
+
 
     private string? KorekcijaText
     {
@@ -111,10 +126,6 @@
         set => DelTelesa.SetKomentar(Stran, value);
     }
 
-    protected override void OnParametersSet()
-    {
-        korekcijaText = DelTelesa.GetKorekcija(Stran)?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
-    }
 
 
     private string CssClassForStran(StranLDE stran) => stran switch

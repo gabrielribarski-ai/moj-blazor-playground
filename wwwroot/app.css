@@ -1,4 +1,4 @@
-html, body {
+Ôªøhtml, body {
     font-family: 'Open Sans', Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -71,7 +71,7 @@ h1:focus {
 }
 
 .deficit-selector-list .deficit-selector-wrapper {
-    display: inline-block; /* ne naj prekriva cele öirine */
+    display: inline-block; /* ne naj prekriva cele ≈°irine */
     max-width: 100%;
 }
 
@@ -86,9 +86,9 @@ h1:focus {
 }
 
 select.form-select {
-    font-size: 0.85rem; /* manjöi font */
-    padding: 0.25rem 0.5rem; /* manjöi notranji robovi */
-    height: auto; /* da se viöina prilagodi */
+    font-size: 0.85rem; /* manj≈°i font */
+    padding: 0.25rem 0.5rem; /* manj≈°i notranji robovi */
+    height: auto; /* da se vi≈°ina prilagodi */
 }
 
 .deficit-selector {
@@ -114,12 +114,12 @@ select.form-select {
     margin-bottom: 1rem;
 }
 
-/* Leva stran ñ rahlo zelenkast odtenek */
+/* Leva stran ‚Äì rahlo zelenkast odtenek */
 .stran-l {
     background-color: #f3f9f3;
 }
 
-/* Desna stran ñ rahlo modrikast odtenek */
+/* Desna stran ‚Äì rahlo modrikast odtenek */
 .stran-d {
     background-color: #f3f6fa;
 }
@@ -134,22 +134,22 @@ select.form-select {
 
 .deficit-block {
     border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 1rem;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
-    /* Leva stran ñ rahlo zelenkast odtenek */
+    /* Leva stran ‚Äì rahlo zelenkast odtenek */
     .deficit-block.stran-l {
         background-color: #f3f9f3;
     }
 
-    /* Desna stran ñ rahlo modrikast odtenek */
+    /* Desna stran ‚Äì rahlo modrikast odtenek */
     .deficit-block.stran-d {
         background-color: #f3f6fa;
     }
 
-    /* Enostranska ñ nevtralno sivkasto */
+    /* Enostranska ‚Äì nevtralno sivkasto */
     .deficit-block.stran-e {
         background-color: #f8f8f8;
 }
@@ -166,7 +166,7 @@ button.btn-izracunaj {
     gap: 0.2rem;
 }
 
-/* Breadcrumb Ëipke ñ manj zaobljene, kompaktnejöe */
+/* Breadcrumb ƒçipke ‚Äì manj zaobljene, kompaktnej≈°e */
 .trenutna-pot-box .crumb {
     display: inline-block;
     padding: 0.15rem 0.4rem;
@@ -177,7 +177,7 @@ button.btn-izracunaj {
     color: #333;
     font-size: 0.8rem;
     transition: background-color 0.2s, box-shadow 0.2s, transform 0.15s;
-    margin-right: 0.2rem; /* manjöi razmik */
+    margin-right: 0.2rem; /* manj≈°i razmik */
 }
 
     .trenutna-pot-box .crumb:hover {
@@ -192,16 +192,16 @@ button.btn-izracunaj {
     margin: 0 0.2rem;
 }
 
-/* Podsegment kartice ñ manj zaobljene, manjöi razmik */
+/* Podsegment kartice ‚Äì manj zaobljene, manj≈°i razmik */
 .podsegment-card {
     border-radius: 3px; /* manj zaobljeno */
-    margin-bottom: 0.35rem; /* manjöi vertikalni razmik */
+    margin-bottom: 0.35rem; /* manj≈°i vertikalni razmik */
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
     cursor: pointer;
 }
 
     .podsegment-card .card-body {
-        padding: 0.3rem 0.5rem; /* kompaktnejöi padding */
+        padding: 0.3rem 0.5rem; /* kompaktnej≈°i padding */
         font-size: 0.85rem;
     }
 
@@ -217,7 +217,7 @@ button.btn-izracunaj {
     background-color: #0d6efd; /* modro ozadje */
     color: #fff; /* bel tekst */
     font-weight: 600; /* poudarjeno */
-    cursor: default; /* ni veË klikabilen */
+    cursor: default; /* ni veƒç klikabilen */
     box-shadow: none; /* brez hover sence */
 }
 
@@ -281,7 +281,7 @@ button.btn-izracunaj {
 }
 /* Loader je vedno prisoten */
 .btn-logout {
-    background-color: #d52b1e; /* Generali rdeËa */
+    background-color: #d52b1e; /* Generali rdeƒça */
     color: #fff;
     border: none;
     border-radius: 0; /* brez zaobljenih robov */
@@ -293,8 +293,8 @@ button.btn-izracunaj {
 
 
 .loading-bar {
-    height: 12px; /* vedno enaka viöina */
-    width: 100%; /* vedno Ëez celotno öirino */
+    height: 12px; /* vedno enaka vi≈°ina */
+    width: 100%; /* vedno ƒçez celotno ≈°irino */
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -304,7 +304,7 @@ button.btn-izracunaj {
     transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-    /* Idle stanje ñ siv trak */
+    /* Idle stanje ‚Äì siv trak */
     .loading-bar.hide {
         background-color: #e2e2e2; 
         color: transparent; /* tekst in pike skrijemo */
@@ -345,9 +345,9 @@ button.btn-izracunaj {
 }
 
 .loading-bar.show {
-    background: linear-gradient( 90deg, #e2e2e2 0%, /* zaËetek siva */
-    #d52b1e 10%, /* rdeËa se pojavi postopoma */
-    #d52b1e 20%, /* polna rdeËa (trak je krajöi) */
+    background: linear-gradient( 90deg, #e2e2e2 0%, /* zaƒçetek siva */
+    #d52b1e 10%, /* rdeƒça se pojavi postopoma */
+    #d52b1e 20%, /* polna rdeƒça (trak je kraj≈°i) */
     #e2e2e2 50%, /* fade nazaj v sivo */
     #e2e2e2 100% /* ostane siva */
     );
@@ -375,3 +375,85 @@ button.btn-izracunaj {
         background-position: 100% 0;
     }
 }
+
+.border-danger {
+    border: 2px solid red !important;
+}
+
+.bg-warning-subtle {
+    background-color: #fff3cd !important;
+}
+
+.fw-bold {
+    font-weight: 600 !important;
+}
+
+/* bolj vpadljiv element, ko je uporabljena korekcija */
+.item-korekcija {
+    border: 2px solid #d9534f !important; /* rdeƒç okvir */
+    background-color: #fff3cd !important; /* rumenkasto ozadje */
+}
+
+/* badge ob poti ali odstotku */
+.badge-korekcija {
+    display: inline-block;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    background: #d9534f; /* bootstrap danger odtenek */
+    border-radius: 0.35rem;
+}
+
+/* subtilni layout detajli */
+.list-group-item .path {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.list-group-item .score {
+    min-width: 4.5rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+
+
+/* Vsa zaklenjena polja */
+input[disabled], textarea[readonly], select[disabled] {
+    background-color: #f8f9fa !important; /* svetlo siva */
+    color: #6c757d !important; /* zatemnjen tekst */
+    cursor: not-allowed;
+    opacity: 1; /* da ni preveƒç prosojno */
+}
+
+
+    input[disabled]::after,
+    textarea[readonly]::after,
+    select[disabled]::after {
+        content: "üîí";
+        position: absolute;
+        right: 8px;
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+
+
+.input-box-measurement {
+    max-width: 80px; /* ali 60px, odvisno od tvojih ≈°tevilk */
+    padding: 0.2rem 0.4rem;
+    font-size: 0.85rem;
+    text-align: right; /* ≈°tevilke so lep≈°e poravnane desno */
+}
+
+.atributi-tabela td,
+.atributi-tabela th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+    .atributi-tabela td:first-child {
+        text-align: left;
+        font-weight: 500;
+    }

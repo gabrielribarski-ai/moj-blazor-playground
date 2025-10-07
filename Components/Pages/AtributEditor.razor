@@ -37,7 +37,7 @@
                     <td>
                         <InputNumber Value="atribut.Ocena.VrednostL"
                                      ValueExpression="() => atribut.Ocena.VrednostL"
-                                     @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetL(atribut, v), atribut.Ocena.VrednostE)"
+                                     @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetL(atribut, v), atribut.Ocena.VrednostL)"
                                      class="form-control input-box-measurement" />
 
                     </td>
@@ -47,7 +47,7 @@
                     <td>
                         <InputNumber Value="atribut.Ocena.VrednostD"
                                      ValueExpression="() => atribut.Ocena.VrednostD"
-                                     @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetD(atribut, v), atribut.Ocena.VrednostE)"
+                                     @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetD(atribut, v), atribut.Ocena.VrednostD)"
                                      class="form-control input-box-measurement" />
 
                     </td>
@@ -90,7 +90,7 @@
 
         if (allSet)
         {
-            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
+            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.Ocenjevanje;
             await FazaChanged.InvokeAsync(DelTelesa.FazaOcenjevanja);
         }
     }

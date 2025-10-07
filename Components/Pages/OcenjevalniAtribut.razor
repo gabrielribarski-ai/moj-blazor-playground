@@ -8,7 +8,8 @@
 @inject ILogger<Index> Logger
 @using Microsoft.AspNetCore.Mvc
 @inject IOptions<JsonOptions> JsonOptions
-
+@inject UserSessionStorageService UserSessionStorage
+@inject LoaderService Loader
     <!-- 1. Vnos atributov -->
 <div class="p-3 border rounded">
 
@@ -18,7 +19,7 @@
     <AtributEditor DelTelesa="DelTelesa" FazaChanged="OnFazaChanged" />
 
     <!-- 2. Gumb Izračunaj -->
-    @if (DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.OceneSoVnesene
+    @if (DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.Ocenjevanje
         || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzbrani
         || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzracunani
         || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.Vpogled
@@ -46,6 +47,7 @@
             {
                 <DeficitWithCorrection DelTelesa="DelTelesa"
                                        Stran="@stran"
+                                       FazaOcenjevanja="@user.FazaOcenjevanja"
                                        OnSelectionChanged="OnDeficitChanged" />
             }
         </div>
@@ -73,7 +75,8 @@
                     <li>Gibljivost E: @DelTelesa.IzmerjeniDeficit.GibljivostSkupajE</li>
                 </ul>
                 <h6>Možni deficiti</h6>
-                <table class="table table-sm">
+
+                <table class="table table-sm table-bordered atributi-tabela">
                     <thead>
                         <tr>
                             <th>Stran</th>
@@ -101,14 +104,14 @@
 </div>
 @code {
 
-    [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
-    [Parameter] public EventCallback<DelTelesa> OnOcenaPotrjena { get; set; }
+
+
+        [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
+        [Parameter] public EventCallback<DelTelesa> OnOcenaPotrjena { get; set; }
 
     private bool ShowDebug = false;
 
-    private decimal? SelectedLPercent;
-    private decimal? SelectedDPercent;
-    private decimal? SelectedEPercent;
+    private PrijavljenUporabnik user;
 
     private bool PrikaziKorekcijoL;
     private bool PrikaziKorekcijoD;
@@ -126,8 +129,25 @@
         }
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        // preberemo userja iz session storage
+        await Loader.RunWithLoader("", async () =>
+        {
+            user = await UserSessionStorage.LoadUserAsync();
+        });
+        foreach (var atr in DelTelesa.Atributi)
+        {
+            if (atr.Ocena == null)
+                atr.Ocena = new();
+        }
+    }
+
     private bool LahkoPotrdi()
     {
+        if (user.FazaOcenjevanja.In(FazaOcenjevanjaEnum.OcenjevanjePotrjeno, FazaOcenjevanjaEnum.Zakljuceno))
+            return false;
+
         if (DelTelesa.SimetrijaTelesa == SimetrijaEnum.LD)
             return DelTelesa.IzbranDeficitL != null &&
                    DelTelesa.IzbranDeficitD != null;
@@ -174,7 +194,7 @@
              });
 
         if (b)
-            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.OceneSoVnesene;
+            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.Ocenjevanje;
         return b;
     }
    
@@ -182,18 +202,9 @@
   private async Task PotrdiIzracunanDeficit()
   {
       //Segment.ClearIzberiMozniDeficit();
+        user.FazaOcenjevanja = FazaOcenjevanjaEnum.Ocenjevanje;
         await OnOcenaPotrjena.InvokeAsync(DelTelesa);
   }
-
-
-    protected override async Task OnInitializedAsync()
-    {
-        foreach (var atr in DelTelesa.Atributi)
-        {
-            if (atr.Ocena == null)
-                atr.Ocena = new();
-        }
-    }
 
 
     private void log_segment()

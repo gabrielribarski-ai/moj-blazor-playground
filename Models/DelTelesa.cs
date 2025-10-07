@@ -9,16 +9,6 @@ public enum SimetrijaEnum
     LD, E
 }
 
-public enum FazaOcenjevanjaEnum
-{
-    NiOcene,
-    Ocenjevanje,
-    OceneSoVnesene,
-    DeficitiIzracunani,
-    DeficitiIzbrani,
-    Urejanje, 
-    Vpogled
-}
 
 
 public class DelTelesa: ICloneable
@@ -36,6 +26,9 @@ public class DelTelesa: ICloneable
     public string KomentarKorekcijaE { get; set; }
     public string KomentarKorekcijaL { get; set; }
     public string KomentarKorekcijaD { get; set; }
+
+    public string DelTelesaTreePathDisplay => DelTelesaTreePath.Replace(">", "🞂");
+
 
     public decimal? GetKorekcija(StranLDE stran) => stran switch
     {
@@ -84,14 +77,14 @@ public class DelTelesa: ICloneable
     {
         get
         {
-            var e = IzbranDeficitE?.IzracunaniOdstotek ?? 0m;
-            var l = IzbranDeficitL?.IzracunaniOdstotek ?? 0m;
-            var d = IzbranDeficitD?.IzracunaniOdstotek ?? 0m;
+            // če obstaja korekcija, ima prednost pred izbranim deficitom
+            var l = KorekcijaOdstotkaL ?? IzbranDeficitL?.IzracunaniOdstotek ?? 0m;
+            var d = KorekcijaOdstotkaD ?? IzbranDeficitD?.IzracunaniOdstotek ?? 0m;
+            var e = KorekcijaOdstotkaE ?? IzbranDeficitE?.IzracunaniOdstotek ?? 0m;
 
             return Math.Min(l + d + e, 100m);
         }
     }
-
 
     public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; } = FazaOcenjevanjaEnum.NiOcene;
 
@@ -123,25 +116,19 @@ public class DelTelesa: ICloneable
         return a;
     }
 
-    public MozniDeficit? IzbranDeficitL =>
-       IzbranDeficit(StranLDE.L);
+    public MozniDeficit? IzbranDeficitL => IzbranDeficit(StranLDE.L);
 
 
-    public MozniDeficit? IzbranDeficitD =>
-       IzbranDeficit(StranLDE.D);
+    public MozniDeficit? IzbranDeficitD => IzbranDeficit(StranLDE.D);
 
 
-    public MozniDeficit? IzbranDeficitE =>
-       IzbranDeficit(StranLDE.E);
+    public MozniDeficit? IzbranDeficitE => IzbranDeficit(StranLDE.E);
 
     public object Clone()
     {
         // plitka kopija (shallow copy)
         return this.MemberwiseClone();
     }
-
-
-
 
 
     public void IzberiMozniDeficit(StranLDE stran, decimal odstotek)

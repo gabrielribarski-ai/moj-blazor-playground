@@ -1,6 +1,27 @@
 ﻿using IzracunInvalidnostiBlazor;
 using IzracunInvalidnostiBlazor.Models;
 
+public class OcenaDelTelesa
+{
+    public string DelTelesaId { get; set; }
+    public decimal? KoncnaOcena { get; set; }
+    public bool UporabljenaKorekcija { get; set; }
+    public string? Komentar { get; set; }
+}
+
+public enum FazaOcenjevanjaEnum
+{
+    NiOcene,
+    Ocenjevanje,
+    OcenjevanjePotrjeno,
+    DeficitiIzracunani,
+    DeficitiIzbrani,
+    Urejanje,
+    Vpogled,
+    Zakljuceno
+}
+
+
 public class PrijavljenUporabnik
 {
     public string UpIme { get; set; } = string.Empty;
@@ -10,7 +31,13 @@ public class PrijavljenUporabnik
     public string StDokumenta { get; set; }
     public Pogoj IzbranPogoj { get; set; }
     public OcenjevalniModel OcenjevalniModel { get; set; } = new();
-    public List<DelTelesa> OcenaSeznam { get; set; }
+    public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; }= FazaOcenjevanjaEnum.NiOcene;
+    public decimal? KoncnaOcena { get; set; }
+    public bool? UporabljenaKorekcija { get; set; }
+    public string? KoncniKomentar { get; set; }
+
+    
+    public List<OcenaDelTelesa> OcenaSeznam { get; set; } = new(); // seznam ocenjenih delov telesa 
 
     public async Task SetIzbranPogoj(string pogojId)
     {
@@ -20,10 +47,34 @@ public class PrijavljenUporabnik
         await OcenjevalniModel.SetTrenutniDelTelesa(GetRoot().DelTelesaId);
     }
 
-    public async Task VpogledVOcenjeniSegment(string ocenjeniSegmentId)
+    /*
+    public async Task VpogledVOcenjeniDelTelesa(string ocenjeniDelTelesaId)
     {
-        this.OcenjevalniModel.TrenutniDelTelesa = OcenaSeznam.Where(x => x.DelTelesaId == ocenjeniSegmentId).First();
+        // preveri, ali imamo oceno za ta ID
+        var ocena = OcenaSeznam.FirstOrDefault(x => x.DelTelesaId == ocenjeniDelTelesaId);
+        if (ocena == null) return;
+
+        // poišči pravi DelTelesa v modelu
+        var del = OcenjevalniModel.DelTelesaSeznam
+            .FirstOrDefault(x => x.DelTelesaId == ocenjeniDelTelesaId);
+
+        if (del != null)
+        {
+            OcenjevalniModel.TrenutniDelTelesa = del;
+        }
     }
+    */
+
+    public async Task VpogledVOcenjeniDelTelesa(string ocenjeniDelTelesaId)
+    {
+        var del = OcenjevalniModel.DelTelesaSeznam
+            .FirstOrDefault(x => x.DelTelesaId == ocenjeniDelTelesaId);
+
+        if (del != null)
+            OcenjevalniModel.TrenutniDelTelesa = del;
+    }
+
+
 
     public decimal? SkupnaOcena
     {
@@ -33,21 +84,36 @@ public class PrijavljenUporabnik
                 return null;
 
             var vsota = OcenaSeznam
-                .SelectMany(seg => seg.MozniDeficitSeznam.Where(d => d.JeIzbran))
-                .Sum(d => d.IzracunaniOdstotek ?? 0m);
+                .Where(o => o.KoncnaOcena.HasValue)
+                .Sum(o => o.KoncnaOcena.Value);
 
             return Math.Min(vsota, 100m);
         }
     }
 
+
+
     public void DodajMedOcenjene(DelTelesa delTelesa)
     {
-        if (OcenaSeznam == null)
-            OcenaSeznam = new List<DelTelesa>();
-        var DelTelesaClone = (DelTelesa)delTelesa.Clone();
-        if (!OcenaSeznam.Any(s => s.DelTelesaId == DelTelesaClone.DelTelesaId))
-            OcenaSeznam.Add(DelTelesaClone);
+        var existing = OcenaSeznam.FirstOrDefault(s => s.DelTelesaId == delTelesa.DelTelesaId);
+        if (existing != null) OcenaSeznam.Remove(existing);
+
+        OcenaSeznam.Add(new OcenaDelTelesa
+        {
+            DelTelesaId = delTelesa.DelTelesaId,
+            KoncnaOcena = delTelesa.SkupniOdstotek,  
+            UporabljenaKorekcija = delTelesa.KorekcijaOdstotkaL.HasValue
+                                || delTelesa.KorekcijaOdstotkaD.HasValue
+                                || delTelesa.KorekcijaOdstotkaE.HasValue,
+            Komentar = delTelesa.GetKomentar(StranLDE.L)
+                    ?? delTelesa.GetKomentar(StranLDE.D)
+                    ?? delTelesa.GetKomentar(StranLDE.E)
+        });
     }
+
+
+
+
 
     public DelTelesa GetRoot()
     {

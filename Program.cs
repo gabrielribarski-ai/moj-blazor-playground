@@ -1,7 +1,9 @@
 /* file: Program.cs */
 
+using BlazorDownloadFile;
 using IzracunInvalidnostiBlazor.Components;
 using IzracunInvalidnostiBlazor.Services;
+using QuestPDF.Infrastructure;
 using System.Text.Encodings.Web;
 using System.Text.Json.Serialization;
 
@@ -15,6 +17,7 @@ builder.Services.AddSignalR(hubOptions =>
 });
 
 
+QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
 {
     options.JsonSerializerOptions.WriteIndented = true;
@@ -35,6 +38,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<PogojAtributNaborLoader>();
 }*/
 
+builder.Services.AddBlazorDownloadFile(); 
 builder.Services.AddScoped<DataDBLoader>();
 builder.Services.AddScoped<UserSessionStorageService>();
 builder.Services.AddScoped<LoaderService>();

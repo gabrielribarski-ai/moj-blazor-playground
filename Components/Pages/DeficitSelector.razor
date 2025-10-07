@@ -1,44 +1,36 @@
 ﻿@using CustomTypeExtensions
 @using IzracunInvalidnostiBlazor.Models
 @using System.Globalization
-
-
 <label class="form-label">@Stran</label>
-<select class="form-select form-select-sm deficit-selector"
-        @bind="SelectedValue"
-        @bind:event="onchange">
+
+<InputSelect @bind-Value="SelectedValue"
+             class="form-select form-select-sm deficit-selector"
+             disabled="@Disabled">
     <option value="">— izberi —</option>
     @foreach (var def in MozniZaStran)
     {
-        <option value="@def.IzracunaniOdstotek?.ToString(CultureInfo.InvariantCulture)">
+        <option value="@def.IzracunaniOdstotek">
             @def.IzbiraOpis
         </option>
     }
-</select>
+</InputSelect>
 
 @code {
-
     [Parameter] public StranLDE Stran { get; set; }
     [Parameter] public IEnumerable<MozniDeficit> MozniZaStran { get; set; } = Enumerable.Empty<MozniDeficit>();
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
 
-    // to bo vezano na <select>
-    
-    private string? SelectedValue
+    // zdaj je SelectedValue tipa decimal?
+    private decimal? SelectedValue
     {
-        get => MozniZaStran.FirstOrDefault(d => d.JeIzbran)
-                           ?.IzracunaniOdstotek?.ToString(CultureInfo.InvariantCulture);
+        get => MozniZaStran.FirstOrDefault(d => d.JeIzbran)?.IzracunaniOdstotek;
         set
         {
-            decimal? parsed = value.AsDecimal(CultureInfo.InvariantCulture);
-
             foreach (var def in MozniZaStran)
-            {
-                def.JeIzbran = def.IzracunaniOdstotek == parsed;
-            }
+                def.JeIzbran = def.IzracunaniOdstotek == value;
 
-            OnSelectionChanged.InvokeAsync((Stran, parsed));
+            OnSelectionChanged.InvokeAsync((Stran, value));
         }
     }
-    
 }

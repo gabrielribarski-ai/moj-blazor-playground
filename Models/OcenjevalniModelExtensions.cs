@@ -13,21 +13,7 @@ namespace IzracunInvalidnostiBlazor.Extensions
             await storage.SetAsync(Key, model);
         }
 
-        public static async Task<OcenjevalniModel> ReadFromSessionStorage(this OcenjevalniModel model, ProtectedSessionStorage storage)
-        {
-            try
-            {
-                var result = await storage.GetAsync<OcenjevalniModel>(Key);
-                return (result.Success && result.Value != null)
-                    ? result.Value
-                    : new OcenjevalniModel();
-            }
-            catch (InvalidOperationException)
-            {
-                // Interop not ready: return a clean model; caller can retry later
-                return new OcenjevalniModel();
-            }
-        }
+
 
     }
 }
