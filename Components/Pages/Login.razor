@@ -19,6 +19,8 @@
             Priimek = query["priimek"] ?? "Novak",
             CasPrijave = DateTime.Now,
             StDokumenta="D-3221342354",
+            ImePacienta =  "Maja",
+            PriimekPacienta =  "Demšar",
             OcenjevalniModel = new OcenjevalniModel()
             {
                 // Lahko dodaš še inicializacijo, če želiš
@@ -27,6 +29,6 @@
         await SessionService.SaveUserAsync(user);
 
         // Preusmeri na glavno stran
-        Nav.NavigateTo("/izberi-pogoj", forceLoad: true);
+        Nav.NavigateTo("/");
     }
 }

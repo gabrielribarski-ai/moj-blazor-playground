@@ -28,8 +28,8 @@
                         <InputNumber Value="atribut.Ocena.VrednostE"
                                      ValueExpression="() => atribut.Ocena.VrednostE"
                                      @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetE(atribut, v), atribut.Ocena.VrednostE)"
-                                     class="form-control input-box-measurement" />
-
+                                     class="form-control input-box-measurement"
+                                     disabled="@DelTelesa.JeZaklenjen" />
                     </td>
                 }
                 else
@@ -38,8 +38,8 @@
                         <InputNumber Value="atribut.Ocena.VrednostL"
                                      ValueExpression="() => atribut.Ocena.VrednostL"
                                      @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetL(atribut, v), atribut.Ocena.VrednostL)"
-                                     class="form-control input-box-measurement" />
-
+                                     class="form-control input-box-measurement"
+                                     disabled="@DelTelesa.JeZaklenjen" />
                     </td>
 
                     <td>@(atribut.StandardnaVrednost?.ToString("0.##") ?? "—")</td>
@@ -48,8 +48,8 @@
                         <InputNumber Value="atribut.Ocena.VrednostD"
                                      ValueExpression="() => atribut.Ocena.VrednostD"
                                      @oninput="EventCallback.Factory.CreateBinder<decimal?>(this, v => SetD(atribut, v), atribut.Ocena.VrednostD)"
-                                     class="form-control input-box-measurement" />
-
+                                     class="form-control input-box-measurement"
+                                     disabled="@DelTelesa.JeZaklenjen" />
                     </td>
                 }
             </tr>
@@ -59,9 +59,7 @@
 
 @code {
     [Parameter] public DelTelesa DelTelesa { get; set; }
-    [Parameter] public EventCallback<FazaOcenjevanjaEnum> FazaChanged { get; set; }
-
-
+    [Parameter] public EventCallback<SegmentnaFaza> FazaChanged { get; set; }
 
     private void SetE(Atribut atribut, decimal? v)
     {
@@ -90,9 +88,8 @@
 
         if (allSet)
         {
-            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.Ocenjevanje;
-            await FazaChanged.InvokeAsync(DelTelesa.FazaOcenjevanja);
+            DelTelesa.SegmentnaFaza = SegmentnaFaza.VrednostiSoVnesene;
+            await FazaChanged.InvokeAsync(DelTelesa.SegmentnaFaza);
         }
     }
-
 }

@@ -1,4 +1,5 @@
 ﻿@page "/oceni-invalidnost"
+@using CustomTypeExtensions
 @using IzracunInvalidnostiBlazor.Extensions
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
@@ -49,11 +50,68 @@
                 <OcenjevalniAtribut DelTelesa="user?.OcenjevalniModel.TrenutniDelTelesa"
                                     @key="user?.OcenjevalniModel?.TrenutniDelTelesa?.DelTelesaId"
                                     OnOcenaPotrjena="OcenaJePotrjena" />
+
+                <!-- Gumb takoj pod seznamom atributov, poravnan desno -->
+                <div class="d-flex justify-content-end mb-2">
+                    <button class="btn btn-subtle" @onclick="ToggleDodatneTocke">
+                        @(PrikaziDodatneTocke ? "▲ Skrij stopnje" : "▼ Prikaži stopnje")
+                    </button>
+                </div>
+
+@if (PrikaziDodatneTocke)
+{
+    <div class="border-start ps-3 mb-3 text-muted small">
+        @{
+            var tockaOpis = user?.OcenjevalniModel?.AtributiZaPrikaz?
+                .SelectMany(a => a.Stopnje)
+                .FirstOrDefault()?.TockaOpis;
+        }
+
+        @if (!string.IsNullOrWhiteSpace(tockaOpis))
+        {
+            <div class="fw-semibold mb-1">@tockaOpis</div>
+        }
+
+        <div class="fw-light mb-2">Možne stopnje</div>
+
+        <table class="table table-sm table-borderless mb-0">
+            <thead class="text-muted small">
+                <tr>
+                    <th>Zap. št.</th>
+                    <th>Opis</th>
+                    <th>Stopnja</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var stopnjeDistinct = user?.OcenjevalniModel?.AtributiZaPrikaz?
+                        .SelectMany(a => a.Stopnje)
+                        .GroupBy(s => s.StopnjaNum)
+                        .Select(g => g.First())
+                        .OrderBy(s => s.StopnjaNum)
+                        .ToList();
+                }
+                @if (stopnjeDistinct != null)
+                {
+                    foreach (var stopnja in stopnjeDistinct)
+                    {
+                        <tr>
+                            <td>@stopnja.ZapSt</td>
+                            <td>@stopnja.StopnjaOpis</td>
+                            <td>@stopnja.StopnjaNum</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+            
             }
 
-
             <!-- Podsegmenti -->
-            <div class="podsegment-list mb-4">
+            <div class="podsegment-list mb-2">
                 @foreach (var seg in user?.OcenjevalniModel?.DeliTelesaZaPrikazSeznam)
                 {
                     <div class="card podsegment-card mb-2"
@@ -102,6 +160,13 @@
                                             @onclick="() => user.VpogledVOcenjeniDelTelesa(ocena.DelTelesaId)">
                                         Vpogled
                                     </button>
+                                      @if (user.GlobalnaFaza != GlobalnaFaza.OcenjevanjeZakljuceno)
+                                      {
+                                       <button class="btn btn-sm btn-outline-danger"
+                                                title="Odstrani oceno"
+                                                @onclick="() => user.OdstraniOceno(ocena.DelTelesaId)">❌
+                                       </button>
+                                      }
                                 </div>
                             </li>
                         }
@@ -111,11 +176,10 @@
                     @if (user?.SkupnaOcena != null)
                     {
                         <div class="progress mt-2" style="height: 20px;">
-                            <div class="progress-bar bg-warning text-start ps-2 fw-bold text-dark"
-                                 role="progressbar"
-                                 style="width:@(user.SkupnaOcena?.ToString(System.Globalization.CultureInfo.InvariantCulture))%">
-                                @user.SkupnaOcena %
+                            <div class="progress-bar bg-warning" role="progressbar"
+                                 style="width:@user.SkupnaOcena.ToCssPercentValue()%">
                             </div>
+                            <span class="progress-label">@user.SkupnaOcena.ToLocalizedPercent()</span>
                         </div>
                     }
 
@@ -136,60 +200,61 @@
                     }
 
                     <!-- Zaključevanje -->
-                    @if (ImaVsajEnoOceno)
-                    {
-                        <div class="mt-4 p-3 border rounded bg-light">
-                            @switch (user?.FazaOcenjevanja)
-                            {
-                                case FazaOcenjevanjaEnum.Ocenjevanje:
-                                    <!-- Samo gumb, brez naslova -->
-                                    <button class="btn btn-primary"
-                                            @onclick="() => user.FazaOcenjevanja = FazaOcenjevanjaEnum.OcenjevanjePotrjeno">
-                                        ✅ Potrdi zaključek meritev
-                                    </button>
-                                    break;
+@if (ImaVsajEnoOceno)
+{
+    <div class="mt-2 p-2 border rounded bg-light">
+        @switch (user?.GlobalnaFaza)
+        {
+            case GlobalnaFaza.Ocenjevanje:
+                <!-- Samo gumb, brez naslova -->
+                <button class="btn btn-primary"
+                        @onclick="() => user.ZamenjajFazo(GlobalnaFaza.OcenjevanjePotrjeno)">
+                    ✅ Potrdi zaključek meritev
+                </button>
+                break;
 
-                                case FazaOcenjevanjaEnum.OcenjevanjePotrjeno:
-                                    <!-- Kulturno navodilo -->
-                                    <p class="text-muted small mb-2">
-                                        Če želite, lahko ob zaključku dodate svojo ročno oceno (%) in komentar,
-                                        ki bosta vključena v končno poročilo.
-                                    </p>
+            case GlobalnaFaza.OcenjevanjePotrjeno:
+                <!-- Kulturno navodilo -->
+                <p class="text-muted small mb-2">
+                    Če želite, lahko ob zaključku dodate svojo ročno oceno (%) in komentar,
+                    ki bosta vključena v končno poročilo.
+                </p>
 
-                                    <div class="mb-2">
-                                        <label class="form-label">Ročna korekcija skupnega odstotka</label>
-                                        <input type="number"
-                                               class="form-control form-control-sm"
-                                               @bind="ManualCorrection"
-                                               min="0" max="100" step="0.1" />
-                                    </div>
+                <div class="mb-2">
+                    <label class="form-label">Ročna korekcija skupnega odstotka</label>
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           @bind="ManualCorrection"
+                           min="0" max="100" step="0.1" />
+                </div>
 
-                                    <div class="mb-2">
-                                        <label class="form-label">Komentar zdravnika</label>
-                                        <textarea class="form-control form-control-sm"
-                                                  rows="3"
-                                                  @bind="FinalComment"></textarea>
-                                    </div>
+                <div class="mb-2">
+                    <label class="form-label">Komentar zdravnika</label>
+                    <textarea class="form-control form-control-sm"
+                              rows="3"
+                              @bind="FinalComment"></textarea>
+                </div>
 
-                                    <button class="btn btn-success"
-                                            @onclick="ZakljuciOcenjevanje">
-                                        ✅ Zaključi ocenjevanje
-                                    </button>
-                                    break;
+                <button class="btn btn-success"
+                        @onclick="ZakljuciOcenjevanje">
+                    ✅ Zaključi ocenjevanje
+                </button>
+                break;
 
-                                case FazaOcenjevanjaEnum.Zakljuceno:
-                                    <h5>Ocenjevanje zaključeno</h5>
-                                    <p class="text-muted small mb-2">
-                                        Ocenjevanje je zaključeno. Sedaj lahko ustvarite uradno poročilo v obliki PDF.
-                                    </p>
+            case GlobalnaFaza.OcenjevanjeZakljuceno:
+                <h5>Ocenjevanje zaključeno</h5>
+                <p class="text-muted small mb-2">
+                    Ocenjevanje je zaključeno. Sedaj lahko ustvarite uradno poročilo v obliki PDF.
+                </p>
 
-                                    <button class="btn btn-primary" @onclick="Prenesi">
-                                        📄 Generiraj PDF
-                                    </button>
-                                    break;
-                            }
-                        </div>
-                    }
+                <button class="btn btn-primary" @onclick="Prenesi">
+                    📄 Generiraj PDF
+                </button>
+                break;
+        }
+    </div>
+}
+
                 </div>
             }
         </div>
@@ -198,18 +263,23 @@
 }
 @code {
 
-   private PrijavljenUporabnik user;
+    private PrijavljenUporabnik user;
     private List<DelTelesa> OcenjeniDeliTelesa = new();
     private List<DelTelesa> BreadcrumbPath = new();
     private bool ImaVsajEnoOceno => user?.OcenaSeznam?.Any() == true;
     private decimal? ManualCorrection { get; set; }
     private string? FinalComment { get; set; }
     private string? ValidationMessage { get; set; }
+    private bool PrikaziDodatneTocke = false;
 
+    private void ToggleDodatneTocke()
+    {
+        PrikaziDodatneTocke = !PrikaziDodatneTocke;
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        await Loader.RunWithLoader("Berem podatke", async () =>
+        await Loader.RunWithLoader("", async () =>
         {
             user = await UserSessionStorage.LoadUserAsync();
         });
@@ -218,7 +288,7 @@
     private async Task OcenaJePotrjena(Models.DelTelesa seg)
     {
         user.DodajMedOcenjene(seg);
-        await Loader.RunWithLoader("Shranjujem podatke", async () =>
+        await Loader.RunWithLoader("", async () =>
         {
             await user.OcenjevalniModel.SetTrenutniDelTelesa(user?.OcenjevalniModel.GetRoot().DelTelesaId);
             await UserSessionStorage.SaveUserAsync(user);
@@ -263,7 +333,8 @@
             user.KoncnaOcena = finalScore;
             user.UporabljenaKorekcija = ManualCorrection.HasValue;
             user.KoncniKomentar = FinalComment;
-            user.FazaOcenjevanja = FazaOcenjevanjaEnum.Zakljuceno;
+            user.ZamenjajFazo(GlobalnaFaza.OcenjevanjeZakljuceno);
+            //StateHasChanged();
         }
 
         ValidationMessage = null; // počisti opozorilo

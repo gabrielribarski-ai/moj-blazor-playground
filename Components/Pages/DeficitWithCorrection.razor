@@ -15,9 +15,9 @@
                          Stran="Stran"
                          MozniZaStran="DelTelesa.MozniDeficitSeznam.Where(d => d.StranLDE == Stran)"
                          OnSelectionChanged="OnSelectionChanged"
-                         Disabled="@(FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno))" />
+                         Disabled="@(GlobalnaFaza.In(GlobalnaFaza.OcenjevanjeZakljuceno,GlobalnaFaza.OcenjevanjePotrjeno))" />
 
-        @if (IzbranDeficit != null && (!FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno)))
+        @if (IzbranDeficit != null && GlobalnaFaza.In(GlobalnaFaza.Ocenjevanje))
         {
             <button class="btn btn-link btn-sm p-0 ms-1 text-secondary"
                     title="Popravi"
@@ -35,14 +35,14 @@
                    @bind-value="KorekcijaText"
                    @bind-value:event="oninput"
                    @onblur="NormalizeKorekcija"
-                   disabled="@(FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno))" />
+                   disabled=@(GlobalnaFaza.In(GlobalnaFaza.OcenjevanjePotrjeno,GlobalnaFaza.OcenjevanjeZakljuceno)) />
 
             <textarea class="form-control form-control-sm"
                       rows="2"
                       placeholder="Komentar"
                       @bind-value="Komentar"
                       @bind-value:event="oninput"
-                      readonly="@(FazaOcenjevanja.In(FazaOcenjevanjaEnum.Zakljuceno, FazaOcenjevanjaEnum.OcenjevanjePotrjeno))">
+                      readonly="@(GlobalnaFaza.In(GlobalnaFaza.OcenjevanjePotrjeno,GlobalnaFaza.OcenjevanjeZakljuceno))">
                 </textarea>
         </div>
     }
@@ -53,7 +53,8 @@
     [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
     [Parameter] public StranLDE Stran { get; set; }
     [Parameter] public EventCallback<(StranLDE stran, decimal? val)> OnSelectionChanged { get; set; }
-    [Parameter] public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; }
+    [Parameter] public GlobalnaFaza GlobalnaFaza { get; set; }
+
 
     private bool PrikaziKorekcijo;
     private string? korekcijaText;
@@ -125,7 +126,6 @@
         get => DelTelesa.GetKomentar(Stran);
         set => DelTelesa.SetKomentar(Stran, value);
     }
-
 
 
     private string CssClassForStran(StranLDE stran) => stran switch

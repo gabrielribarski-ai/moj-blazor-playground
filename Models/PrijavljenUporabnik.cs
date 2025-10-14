@@ -1,5 +1,7 @@
-﻿using IzracunInvalidnostiBlazor;
+﻿using CustomTypeExtensions;
+using IzracunInvalidnostiBlazor;
 using IzracunInvalidnostiBlazor.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class OcenaDelTelesa
 {
@@ -9,6 +11,9 @@ public class OcenaDelTelesa
     public string? Komentar { get; set; }
 }
 
+
+
+/*
 public enum FazaOcenjevanjaEnum
 {
     NiOcene,
@@ -20,7 +25,7 @@ public enum FazaOcenjevanjaEnum
     Vpogled,
     Zakljuceno
 }
-
+*/
 
 public class PrijavljenUporabnik
 {
@@ -29,14 +34,54 @@ public class PrijavljenUporabnik
     public string Priimek { get; set; } = string.Empty;
     public DateTime CasPrijave { get; set; } = DateTime.Now;
     public string StDokumenta { get; set; }
+
+    public string ImePacienta { get; set; }
+    public string PriimekPacienta { get; set; }
+
     public Pogoj IzbranPogoj { get; set; }
     public OcenjevalniModel OcenjevalniModel { get; set; } = new();
-    public FazaOcenjevanjaEnum FazaOcenjevanja { get; set; }= FazaOcenjevanjaEnum.NiOcene;
+    public GlobalnaFaza GlobalnaFaza { get; private set; } = GlobalnaFaza.Ocenjevanje;
+
     public decimal? KoncnaOcena { get; set; }
     public bool? UporabljenaKorekcija { get; set; }
     public string? KoncniKomentar { get; set; }
 
-    
+    public void ZamenjajFazo(GlobalnaFaza novaFaza)
+    {
+        GlobalnaFaza = novaFaza;
+
+        if (novaFaza.In(GlobalnaFaza.OcenjevanjePotrjeno, GlobalnaFaza.OcenjevanjeZakljuceno))
+        {
+            // zakleni vse ocenjene dele telesa
+            foreach (var ocena in OcenaSeznam)
+            {
+                var del = OcenjevalniModel.DelTelesaSeznam
+                    .FirstOrDefault(x => x.DelTelesaId == ocena.DelTelesaId);
+
+                if (del != null)
+                {
+                    del.SegmentnaFaza = SegmentnaFaza.Zaklenjeno;
+                }
+            }
+        }
+        else if (novaFaza == GlobalnaFaza.Ocenjevanje)
+        {
+            // če gremo nazaj v Ocenjevanje, odklene vse prej zaklenjene segmente
+            foreach (var ocena in OcenaSeznam)
+            {
+                var del = OcenjevalniModel.DelTelesaSeznam
+                    .FirstOrDefault(x => x.DelTelesaId == ocena.DelTelesaId);
+
+                if (del != null && del.SegmentnaFaza == SegmentnaFaza.Zaklenjeno)
+                {
+                    del.SegmentnaFaza = SegmentnaFaza.DeficitiIzracunani;
+                }
+            }
+        }
+    }
+
+
+
     public List<OcenaDelTelesa> OcenaSeznam { get; set; } = new(); // seznam ocenjenih delov telesa 
 
     public async Task SetIzbranPogoj(string pogojId)
@@ -91,7 +136,21 @@ public class PrijavljenUporabnik
         }
     }
 
-
+    public void OdstraniOceno(string delTelesaId)
+    {
+        var ocena = OcenaSeznam.FirstOrDefault(x => x.DelTelesaId == delTelesaId);
+        if (ocena != null)
+        {
+            OcenaSeznam.Remove(ocena);
+            // opcijsko: tudi v modelu resetiraj fazo segmenta
+            var del = OcenjevalniModel.DelTelesaSeznam
+                .FirstOrDefault(x => x.DelTelesaId == delTelesaId);
+            if (del != null && del.SegmentnaFaza == SegmentnaFaza.Zaklenjeno)
+            {
+                del.SegmentnaFaza = SegmentnaFaza.NiOcene;
+            }
+        }
+    }
 
     public void DodajMedOcenjene(DelTelesa delTelesa)
     {

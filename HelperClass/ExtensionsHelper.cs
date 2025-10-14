@@ -42,6 +42,21 @@ namespace CustomTypeExtensions
         }
     }
 
+    public static class DecimalExtensions
+    {
+        // Za CSS širino
+        public static string ToCssPercentValue(this decimal? value)
+            => value.HasValue
+                ? value.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                : "0";
+
+        // Za prikaz uporabniku
+        public static string ToLocalizedPercent(this decimal? value)
+            => value.HasValue
+                ? $"{value.Value:0.#} %"
+                : "0 %";
+    }
+
     public static class EnumExtensions
     {
         public static string GetDescription(this Enum value)
@@ -119,6 +134,25 @@ namespace CustomTypeExtensions
 
             return default_;
         }
+
+        public static string AsPercent(this decimal value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture) + "%";
+        }
+
+        /// <summary>
+        /// Pretvori nullable decimal v niz za CSS width (%), ali vrne prazen string.
+        /// </summary>
+        public static string AsPercent(this decimal? value)
+        {
+            return value.HasValue
+                ? value.Value.ToString(CultureInfo.InvariantCulture) + "%"
+                : string.Empty;
+
+        }
+
+
+
 
 
         public static decimal? AsDecimal(this object inputObj, CultureInfo? culture = null, decimal ? default_ = null )

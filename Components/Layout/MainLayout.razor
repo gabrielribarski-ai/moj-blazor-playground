@@ -1,12 +1,15 @@
 ﻿@inherits LayoutComponentBase
+@using IzracunInvalidnostiBlazor.Components.Pages
 @using IzracunInvalidnostiBlazor.Models
 @using IzracunInvalidnostiBlazor.Services
 @inject UserSessionStorageService UserSessionStorage
 @inject NavigationManager Nav
 @inject LoaderService Loader
+@inject DataDBLoader DataDBLoader
 
 <div class="app-shell @(Loader.IsVisible ? "has-loader" : null)">
     <div class="header-wrap">
+        <!-- Glavni header z logotipom in uporabnikom -->
         <div class="app-header">
             <img src="images/generali-logo-big.svg" alt="Generali" class="logo" />
             <div class="user-info">
@@ -20,11 +23,22 @@
             </div>
         </div>
 
-        <!-- Loader je vedno prisoten -->
+        <!-- Loader -->
         <div class="loading-bar @(Loader.IsVisible ? "show" : "hide")">
             <span>@Loader.Message</span>
-            <div class="dots"><span>.</span><span>.</span><span>.</span></div>
         </div>
+
+        <!-- TopContextBar -->
+@if (user != null && user.OcenjevalniModel?.PogojSeznam != null)
+{
+    <TopContextBar PogojSeznam="user.OcenjevalniModel.PogojSeznam"
+                   IzbranPogojSifra="@user.IzbranPogoj?.Sifra"
+                   StDokumenta="@user.StDokumenta"
+                   PacientIme="@user.ImePacienta"
+                   PacientPriimek="@user.PriimekPacienta"
+                   DatumOcenjevanja="@DateTime.Today"
+                   OnPogojPotrjen="OnPogojChanged" />
+}
     </div>
 
     <article class="content">
@@ -32,8 +46,8 @@
     </article>
 </div>
 
-@code {
 
+ @code {
     private PrijavljenUporabnik? user;
 
     protected override void OnInitialized()
@@ -45,13 +59,20 @@
     {
         if (firstRender)
         {
-            user = await Loader.RunWithLoader("Pridobivam podatke uporabnika...", async () =>
+            user = await Loader.RunWithLoader("", async () =>
             {
                 return await UserSessionStorage.LoadUserAsync();
             });
 
-            //Loader.Show("BLABLABALBA");
-           // StateHasChanged();
+            // Ensure PogojSeznam is loaded for the dropdown
+            if (user?.OcenjevalniModel?.PogojSeznam == null || !user.OcenjevalniModel.PogojSeznam.Any())
+            {
+                user.OcenjevalniModel ??= new OcenjevalniModel();
+                var loader = new DataDBLoader(/* _config if needed */);
+                user.OcenjevalniModel.PogojSeznam = await DataDBLoader.LoadPogojSeznamAsync();
+                await UserSessionStorage.SaveUserAsync(user);
+                StateHasChanged();
+            }
         }
     }
 
@@ -64,9 +85,25 @@
     {
         await Loader.RunWithLoader("Odjavljam uporabnika...", async () =>
         {
-            await UserSessionStorage.ClearSessionFromStorage();   // to že obstaja
+            await UserSessionStorage.ClearSessionFromStorage();
             Nav.NavigateTo("/", forceLoad: true);
         });
     }
 
+    private async Task OnPogojChanged(string izbranPogojId)
+    {
+        await Loader.RunWithLoader("", async () =>
+        {
+            user.OcenjevalniModel.DelTelesaSeznam = await DataDBLoader.LoadSegmentSeznamAsync();
+            await DataDBLoader.PreberiInPoveziAtributeDBAsync(user.OcenjevalniModel);
+            await user.SetIzbranPogoj(izbranPogojId);
+            //await DataDBLoader.PreberiStopnjDBAsync(user.OcenjevalniModel, izbranPogojId);
+            await DataDBLoader.LoadStopnjeAsync(user.OcenjevalniModel, izbranPogojId);
+            await UserSessionStorage.SaveUserAsync(user);
+        });
+
+        // Now that user.IzbranPogoj is set, the TopContextBar will render as text
+        Nav.NavigateTo("/oceni-invalidnost");
+    }
 }
+

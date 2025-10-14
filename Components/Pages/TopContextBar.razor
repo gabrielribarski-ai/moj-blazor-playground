@@ -1,0 +1,60 @@
+﻿@using IzracunInvalidnostiBlazor
+
+<div class="top-info-bar w-100 @(string.IsNullOrEmpty(IzbranPogojSifra) ? "select-mode" : "")">
+    <div class="d-flex justify-content-between align-items-center px-3 py-2">
+        <div class="d-flex align-items-center flex-wrap">
+
+            <!-- Pogoj -->
+            <div class="me-4">
+                <strong>Pogoj:</strong>
+                @if (string.IsNullOrEmpty(IzbranPogojSifra) && (PogojSeznam?.Any() == true))
+                {
+                    <select @bind="IzbranPogojId" class="form-select form-select-sm d-inline-block w-auto ms-1 me-2 top-pogoj-select">
+                        <option value="">-- Izberi --</option>
+                        @foreach (var pogoj in PogojSeznam)
+                        {
+                            <option value="@pogoj.PogojId">@pogoj.Sifra</option>
+                        }
+                    </select>
+                    <button class="btn btn-sm btn-primary" @onclick="PotrdiPogoj">Potrdi</button>
+                }
+                else
+                {
+                    <span class="ms-1">@IzbranPogojSifra</span>
+                }
+            </div>
+
+            <!-- Pacient -->
+            <div class="me-4">👤@PacientIme @PacientPriimek</div>
+
+            <!-- Št. dokumenta -->
+            <div class="me-4">📄 @StDokumenta</div>
+        </div>
+
+        <!-- Datum -->
+        <div class="text-muted small">
+            📅 @DatumOcenjevanja.ToString("dd. MM. yyyy")
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? IzbranPogojSifra { get; set; }
+    [Parameter] public string? StDokumenta { get; set; }
+    [Parameter] public string? PacientIme { get; set; }
+    [Parameter] public string? PacientPriimek { get; set; }
+    [Parameter] public DateTime DatumOcenjevanja { get; set; }
+
+    [Parameter] public IEnumerable<Pogoj>? PogojSeznam { get; set; }
+    [Parameter] public EventCallback<string> OnPogojPotrjen { get; set; }
+
+    private string? IzbranPogojId;
+
+    private async Task PotrdiPogoj()
+    {
+        if (!string.IsNullOrEmpty(IzbranPogojId))
+        {
+            await OnPogojPotrjen.InvokeAsync(IzbranPogojId);
+        }
+    }
+}

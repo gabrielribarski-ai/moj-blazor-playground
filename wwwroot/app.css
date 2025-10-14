@@ -15,7 +15,7 @@ a, .btn-link {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 
@@ -152,7 +152,7 @@ select.form-select {
     /* Enostranska – nevtralno sivkasto */
     .deficit-block.stran-e {
         background-color: #f8f8f8;
-}
+    }
 
 button.btn-izracunaj {
     margin-bottom: 1rem; /* ali margin-top pri boxu */
@@ -166,31 +166,31 @@ button.btn-izracunaj {
     gap: 0.2rem;
 }
 
-/* Breadcrumb čipke – manj zaobljene, kompaktnejše */
-.trenutna-pot-box .crumb {
-    display: inline-block;
-    padding: 0.15rem 0.4rem;
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 2px; /* manj zaobljeno */
-    cursor: pointer;
-    color: #333;
-    font-size: 0.8rem;
-    transition: background-color 0.2s, box-shadow 0.2s, transform 0.15s;
-    margin-right: 0.2rem; /* manjši razmik */
-}
-
-    .trenutna-pot-box .crumb:hover {
-        background-color: #e9f2fb;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.12);
-        transform: translateY(-1px);
-        color: #0d6efd;
+    /* Breadcrumb čipke – manj zaobljene, kompaktnejše */
+    .trenutna-pot-box .crumb {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        background-color: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 2px; /* manj zaobljeno */
+        cursor: pointer;
+        color: #333;
+        font-size: 0.8rem;
+        transition: background-color 0.2s, box-shadow 0.2s, transform 0.15s;
+        margin-right: 0.2rem; /* manjši razmik */
     }
 
-.trenutna-pot-box .separator {
-    color: #999;
-    margin: 0 0.2rem;
-}
+        .trenutna-pot-box .crumb:hover {
+            background-color: #e9f2fb;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            transform: translateY(-1px);
+            color: #0d6efd;
+        }
+
+    .trenutna-pot-box .separator {
+        color: #999;
+        margin: 0 0.2rem;
+    }
 
 /* Podsegment kartice – manj zaobljene, manjši razmik */
 .podsegment-card {
@@ -221,11 +221,11 @@ button.btn-izracunaj {
     box-shadow: none; /* brez hover sence */
 }
 
-.trenutna-pot-box .crumb.active:hover {
-    transform: none; /* naj se ne premika */
-    box-shadow: none;
-    background-color: #0d6efd; /* ostane enako */
-}
+    .trenutna-pot-box .crumb.active:hover {
+        transform: none; /* naj se ne premika */
+        box-shadow: none;
+        background-color: #0d6efd; /* ostane enako */
+    }
 
 
 /* App shell toggles a class to reserve space for the loader when visible */
@@ -238,7 +238,7 @@ button.btn-izracunaj {
 .app-header {
     background-color: #fff;
     /*border-top: 1px solid #d52b1e;*/ /* samo zgoraj */
-    /*border-bottom: 1px solid #d52b1e; *//* samo spodaj */
+    /*border-bottom: 1px solid #d52b1e; */ /* samo spodaj */
     border-left: none; /* brez levega */
     border-right: none; /* brez desnega */
     border-radius: 0;
@@ -247,7 +247,7 @@ button.btn-izracunaj {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 70px;
+    min-height: 60px;
 }
 
     .app-header .logo {
@@ -293,7 +293,7 @@ button.btn-izracunaj {
 
 
 .loading-bar {
-    height: 12px; /* vedno enaka višina */
+    height: 8px; /* vedno enaka višina */
     width: 100%; /* vedno čez celotno širino */
     display: flex;
     align-items: center;
@@ -306,7 +306,7 @@ button.btn-izracunaj {
 
     /* Idle stanje – siv trak */
     .loading-bar.hide {
-        background-color: #e2e2e2; 
+        background-color: #e2e2e2;
         color: transparent; /* tekst in pike skrijemo */
     }
 
@@ -447,13 +447,138 @@ input[disabled], textarea[readonly], select[disabled] {
     text-align: right; /* številke so lepše poravnane desno */
 }
 
-.atributi-tabela td,
-.atributi-tabela th {
-    vertical-align: middle;
-    text-align: center;
+
+.atributi-tabela td:first-child {
+    text-align: left;
+    font-weight: 500;
 }
 
-    .atributi-tabela td:first-child {
-        text-align: left;
+/* Zmanjšaj padding v celicah */
+.atributi-tabela td,
+.atributi-tabela th {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    line-height: 1.1; /* privzeto je ~1.5 */
+    vertical-align: middle;
+}
+
+/* Inputi naj bodo nižji in kompaktni */
+.atributi-tabela input.form-control {
+    font-size: 0.85rem;
+    padding: 0.15rem 0.3rem;
+    height: auto; /* prepreči fiksno višino iz Bootstrapa */
+    line-height: 1.2;
+    max-width: 70px; /* da ne raztegne stolpca */
+    text-align: right; /* številke lepo poravnane */
+}
+
+
+.top-info-bar {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+    .top-info-bar strong {
         font-weight: 500;
+        margin-right: 0.3rem;
+    }
+
+    .top-info-bar .d-flex > div {
+        white-space: nowrap;
+    }
+
+
+    .top-info-bar select.form-select {
+        width: auto;
+        min-width: 200px;
+        padding-right: 2rem; /* malo več prostora za tekst */
+    }
+
+.top-pogoj-select {
+    min-width: 220px;
+}
+
+
+/* Ko je TopContextBar v izbirnem načinu */
+.top-info-bar.select-mode {
+    background-color: #eaf4ff; /* nežno modrikasto ozadje */
+    border-bottom: 2px solid #0d6efd; /* subtilen poudarek */
+    transition: background-color 0.3s ease;
+}
+
+    .top-info-bar.select-mode strong {
+        color: #0d6efd; /* poudari labelo Pogoj */
+    }
+
+
+.top-info-bar {
+    font-size: 0.95rem;
+}
+
+    .top-info-bar .me-4 {
+        display: flex;
+        align-items: center;
+    }
+
+        .top-info-bar .me-4 strong {
+            margin-right: 0.25rem;
+        }
+
+.progress {
+    position: relative;
+    height: 20px;
+    overflow: hidden;
+}
+
+    .progress .progress-label {
+        position: absolute;
+        top: 0;
+        left: 6px;
+        transform: none;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #000;
+        line-height: 20px;
+        white-space: nowrap;
+    }
+
+.progress-bar {
+    height: 100%;
+    /* brez paddinga, brez text-align, brez dodatne širine */
+    font-weight: 600; /* če želiš, a ni nujno */
+    box-sizing: border-box;
+}
+
+
+.btn-subtle {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.5rem;
+    color: #555;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    transition: background-color 0.2s ease;
+}
+
+    .btn-subtle:hover {
+        background-color: #e9ecef;
+        color: #333;
+    }
+
+
+.subtle-section {
+    font-size: 0.85rem;
+    color: #555;
+    background-color: #fafafa;
+    border: 1px dashed #ccc;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+    .subtle-section h6 {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #444;
+        margin-bottom: 0.5rem;
     }

@@ -10,21 +10,14 @@
 @inject IOptions<JsonOptions> JsonOptions
 @inject UserSessionStorageService UserSessionStorage
 @inject LoaderService Loader
-    <!-- 1. Vnos atributov -->
-<div class="p-3 border rounded">
 
-    <span class="segment-atribut-title">@DelTelesa.Opis</span>
+<div class="p-1 border rounded">
 
     <!-- 1. Vnos atributov -->
     <AtributEditor DelTelesa="DelTelesa" FazaChanged="OnFazaChanged" />
 
     <!-- 2. Gumb Izračunaj -->
-    @if (DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.Ocenjevanje
-        || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzbrani
-        || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.DeficitiIzracunani
-        || DelTelesa.FazaOcenjevanja == FazaOcenjevanjaEnum.Vpogled
-    )
-    @*@if (AliSoOceneVnesene())*@
+    @if (DelTelesa.SegmentnaFaza.In(SegmentnaFaza.VrednostiSoVnesene, SegmentnaFaza.DeficitiIzracunani))
     {
         <div>
             <button class="btn btn-primary mb-3 btn-izracunaj" @onclick="IzracunajMozneDeficite">
@@ -34,7 +27,7 @@
     }
 
     <!-- 3. Dropdowni + debug -->
-    @if (DelTelesa.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzracunani, FazaOcenjevanjaEnum.Vpogled))
+    @if (DelTelesa.SegmentnaFaza.In(SegmentnaFaza.DeficitiIzracunani))
     {
         <div class="deficit-selector-list">
             @{
@@ -47,26 +40,26 @@
             {
                 <DeficitWithCorrection DelTelesa="DelTelesa"
                                        Stran="@stran"
-                                       FazaOcenjevanja="@user.FazaOcenjevanja"
+                                       GlobalnaFaza="@user.GlobalnaFaza"
                                        OnSelectionChanged="OnDeficitChanged" />
             }
         </div>
-        @*if (Segment.FazaOcenjevanja.In(FazaOcenjevanjaEnum.DeficitiIzbrani, FazaOcenjevanjaEnum.Vpogled))*@
-        @if (LahkoPotrdi()) 
+
+        @if (LahkoPotrdi())
         {
-            <button class="btn btn-success mt-3" @onclick="PotrdiIzracunanDeficit">
+            <button class="btn btn-success" @onclick="PotrdiIzracunanDeficit">
                 Potrdi oceno
             </button>
         }
 
         <!-- Debug izpis -->
-        <button class="btn btn-link mt-2" type="button" @onclick="ToggleDebug">
+        <button class="btn btn-link" type="button" @onclick="ToggleDebug">
             🔍 Pokaži debug izpis
         </button>
 
         @if (ShowDebug)
         {
-            <div class="card card-body mt-2">
+            <div class="card card-body">
                 <h6>Debug podatki</h6>
                 <ul>
                     <li>Standard skupaj: @DelTelesa.IzmerjeniDeficit.StandardSkupaj</li>
@@ -80,17 +73,17 @@
                     <thead>
                         <tr>
                             <th>Stran</th>
-                            <th>Primerjava</th>                           
+                            <th>Primerjava</th>
                             <th>Deficit %</th>
                             <th>Izračunani odstotek</th>
                         </tr>
-                        </thead>
+                    </thead>
                     <tbody>
                         @foreach (var d in DelTelesa.MozniDeficitSeznam)
                         {
                             <tr>
                                 <td>@d.StranLDE</td>
-                                <td>@d.MoznaPrimerjava</td>                           
+                                <td>@d.MoznaPrimerjava</td>
                                 <td>@d.Deficit?.ToString("0.0") %</td>
                                 <td>@d.IzracunaniOdstotek?.ToString("0.0")</td>
                             </tr>
@@ -102,12 +95,10 @@
     }
 
 </div>
+
 @code {
-
-
-
-        [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
-        [Parameter] public EventCallback<DelTelesa> OnOcenaPotrjena { get; set; }
+    [Parameter] public DelTelesa DelTelesa { get; set; } = default!;
+    [Parameter] public EventCallback<DelTelesa> OnOcenaPotrjena { get; set; }
 
     private bool ShowDebug = false;
 
@@ -145,7 +136,8 @@
 
     private bool LahkoPotrdi()
     {
-        if (user.FazaOcenjevanja.In(FazaOcenjevanjaEnum.OcenjevanjePotrjeno, FazaOcenjevanjaEnum.Zakljuceno))
+        if (DelTelesa.SegmentnaFaza.In(SegmentnaFaza.VrednostiSoVnesene))
+        //if (user.GlobalnaFaza.In(GlobalnaFaza.OcenjevanjePotrjeno, GlobalnaFaza.OcenjevanjeZakljuceno))
             return false;
 
         if (DelTelesa.SimetrijaTelesa == SimetrijaEnum.LD)
@@ -176,33 +168,18 @@
 
     private void ToggleDebug() => ShowDebug = !ShowDebug;
 
-    private void OnFazaChanged(FazaOcenjevanjaEnum novaFaza)
+    private void OnFazaChanged(SegmentnaFaza novaFaza)
     {
-        DelTelesa.FazaOcenjevanja = novaFaza;
+        DelTelesa.SegmentnaFaza = novaFaza;
         StateHasChanged(); // rerender parent
     }
 
-
-    private bool AliSoOceneVnesene()
-    {
-        bool b = DelTelesa.Atributi.All(a =>
-             DelTelesa.SimetrijaTelesa switch
-             {
-                 SimetrijaEnum.LD => a.Ocena?.VrednostL.HasValue == true && a.Ocena?.VrednostD.HasValue == true,
-                 SimetrijaEnum.E => a.Ocena?.VrednostE.HasValue == true,
-                 _ => false
-             });
-
-        if (b)
-            DelTelesa.FazaOcenjevanja = FazaOcenjevanjaEnum.Ocenjevanje;
-        return b;
-    }
-   
     
   private async Task PotrdiIzracunanDeficit()
   {
       //Segment.ClearIzberiMozniDeficit();
-        user.FazaOcenjevanja = FazaOcenjevanjaEnum.Ocenjevanje;
+        //user.GlobalnaFaza = GlobalnaFaza.OcenjevanjePotrjeno;
+        DelTelesa.SegmentnaFaza = SegmentnaFaza.DeficitiIzracunani;  
         await OnOcenaPotrjena.InvokeAsync(DelTelesa);
   }
 

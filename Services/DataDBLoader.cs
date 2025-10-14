@@ -77,52 +77,20 @@ namespace IzracunInvalidnostiBlazor.Services
            return result;
         }
 
-        public async Task PreberiStopnjDBAsync(OcenjevalniModel model, string pogojId)
-        {
-            using (var conn = new OracleConnection(connStr))
-            {
-                conn.Open();
-                string q = "select * from vw_b1_atr_stopnja where pogoj_id=:pogoj_id";
-
-                using (OracleCommand cmd = new OracleCommand(q, conn))
-                {
-                    cmd.Parameters.Add(new OracleParameter("pogoj_id", OracleDbType.Varchar2, pogojId, ParameterDirection.Input));
-
-                    DataTable dt = new DataTable();
-                    using (OracleDataReader reader = cmd.ExecuteReader())
-                    {
-                        dt.Load(reader, LoadOption.PreserveChanges);
-                    }
-
-                    foreach (DataRow dr in dt.Rows)
-                    {
-                        string atribut_id = dr["atribut_id"].ToString();
-                        var atr = FindAtributById(model,  atribut_id);
-                        if (atr != null)
-                        {
-                            StopnjaDeficita stopnja = new();
-                            stopnja.PogojAtributId = dr["pogoj_atribut_id"].ToString();
-                            stopnja.ZapSt = dr["zap_st"].ToInt().Value;
-                            stopnja.OdstotekFR = dr["fiksni_odstotek"].ToString() == "N" ? OdstotekFR.R : OdstotekFR.F;
-                            stopnja.StopnjaOpis = dr["stopnja_opis"].ToString();
-                            stopnja.ObmocjeNum = dr["obmocje_num"].AsDecimal();
-                            stopnja.StopnjaNum = dr["stopnja_num"].ToInt().Value;
-                            stopnja.TockaOpis = dr["tocka_opis"].ToString();
-                            stopnja.Operator = dr["operator_1"].ToString();
-                            stopnja.Operator = dr["operator_1"].ToString();
-                            atr.Stopnje.Add(stopnja);
-                        }
-                    }
-                }
-            }
-        }
-
         public Atribut? FindAtributById(OcenjevalniModel model, string atributId)
         {
             return model.DelTelesaSeznam
                 .Where(s => s.ImaOcenjevalneAtribute && s.Atributi != null)
                 .SelectMany(s => s.Atributi)
                 .FirstOrDefault(a => a.AtributId == atributId);
+        }
+
+        public bool ImaStopnjo(Atribut atr, decimal stopnjaNum)
+        {
+            if (atr == null || atr.Stopnje == null)
+                return false;
+
+            return atr.Stopnje.Any(s => s.StopnjaNum == stopnjaNum);
         }
 
         public async Task LoadStopnjeAsync(OcenjevalniModel model, string pogojId)
@@ -144,7 +112,7 @@ namespace IzracunInvalidnostiBlazor.Services
             {
                 string atribut_id = dr["atribut_id"].ToString();
                 var atr = FindAtributById(model, atribut_id);
-                if (atr != null)
+                if (atr != null && !ImaStopnjo(atr, dr["stopnja_num"].AsDecimal().Value))
                 {
                     StopnjaDeficita stopnja = new()
                     {
@@ -153,7 +121,7 @@ namespace IzracunInvalidnostiBlazor.Services
                         OdstotekFR = dr["fiksni_odstotek"].ToString() == "N" ? OdstotekFR.R : OdstotekFR.F,
                         StopnjaOpis = dr["stopnja_opis"].ToString(),
                         ObmocjeNum = dr["obmocje_num"].AsDecimal(),
-                        StopnjaNum = dr["stopnja_num"].ToInt().Value,
+                        StopnjaNum = dr["stopnja_num"].AsDecimal().Value,
                         TockaOpis = dr["tocka_opis"].ToString(),
                         Operator = dr["operator_1"].ToString()
                     };
